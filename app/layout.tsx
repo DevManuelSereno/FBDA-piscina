@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Rubik, Geist_Mono } from "next/font/google";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -28,7 +29,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${rubik.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   );
 }
