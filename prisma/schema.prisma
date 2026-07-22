@@ -1,7 +1,12 @@
-// This is your Prisma schema file,
+// Prisma schema — Sistema de Ranking de Natação (FBDA)
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// NOTA: campos de "tipo fixo" (sexo, estilo de prova, status do resultado,
+// papel do usuário, tipo de regra de pontuação) são modelados como String,
+// não como `enum` do Prisma. SQLite (usado em dev) não suporta enums nativos;
+// mantendo String em todo lugar, o mesmo schema funciona sem alterações em
+// dev (SQLite) e produção (Postgres). A validação do conjunto de valores
+// válidos fica a cargo do Zod na camada de aplicação.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +15,143 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+}
+
+model Clube {
+  id        String   @id @default(cuid())
+  nome      String
+  sigla     String?
+  cidade    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  atletas Atleta[]
+
+  @@unique([nome])
+}
+
+model Categoria {
+  id       String @id @default(cuid())
+  nome     String
+  sexo     String // "M" | "F" | "MISTO"
+  idadeMin Int
+  idadeMax Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resultados Resultado[]
+
+  @@unique([nome, sexo])
+}
+
+model Atleta {
+  id             String   @id @default(cuid())
+  nomeCompleto   String
+  dataNascimento DateTime
+  sexo           String // "M" | "F"
+  ativo          Boolean  @default(true)
+
+  clubeId String
+  clube   Clube  @relation(fields: [clubeId], references: [id])
+
+  resultados Resultado[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubeId])
+}
+
+model Prova {
+  id        String @id @default(cuid())
+  nome      String
+  estilo    String // LIVRE | COSTAS | PEITO | BORBOLETA | MEDLEY
+  distancia Int // metros
+  piscina   String // "25m" | "50m"
+
+  resultados Resultado[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([nome, distancia, estilo, piscina])
+}
+
+model Competicao {
+  id        String   @id @default(cuid())
+  nome      String
+  data      DateTime
+  local     String?
+  temporada String?
+
+  resultados Resultado[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resultado {
+  id String @id @default(cuid())
+
+  atletaId String
+  atleta   Atleta @relation(fields: [atletaId], references: [id], onDelete: Cascade)
+
+  provaId String
+  prova   Prova  @relation(fields: [provaId], references: [id], onDelete: Cascade)
+
+  competicaoId String
+  competicao   Competicao @relation(fields: [competicaoId], references: [id], onDelete: Cascade)
+
+  // Categoria disputada — snapshot no momento do lançamento, para o
+  // ranking permanecer estável mesmo se as faixas etárias mudarem depois.
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  tempoCentesimos Int? // null quando status != VALIDO
+  colocacao       Int? // posição na prova; null quando DQ/DNS
+  pontos          Float  @default(0)
+  status          String @default("VALIDO") // VALIDO | DQ | DNS
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([atletaId, provaId, competicaoId])
+  @@index([competicaoId, provaId])
+  @@index([categoriaId])
+}
+
+model RegraPontuacao {
+  id    String  @id @default(cuid())
+  nome  String
+  tipo  String // COLOCACAO | FINA
+  ativo Boolean @default(false)
+
+  posicoes PontuacaoPosicao[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PontuacaoPosicao {
+  id String @id @default(cuid())
+
+  regraId String
+  regra   RegraPontuacao @relation(fields: [regraId], references: [id], onDelete: Cascade)
+
+  posicao Int
+  pontos  Float
+
+  @@unique([regraId, posicao])
+}
+
+model Usuario {
+  id        String @id @default(cuid())
+  email     String @unique
+  senhaHash String
+  nome      String
+  papel     String @default("EDITOR") // ADMIN | EDITOR
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
