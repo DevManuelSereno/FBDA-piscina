@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { provaSchema } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth-guard";
+import { isUniqueConstraintError } from "@/lib/prisma-errors";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -19,6 +21,9 @@ export async function createProva(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseProvaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -26,8 +31,12 @@ export async function createProva(
 
   try {
     await prisma.prova.create({ data: parsed.data });
-  } catch {
-    return { error: "Já existe uma prova com esses dados." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe uma prova com esses dados." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/provas");
@@ -39,6 +48,9 @@ export async function updateProva(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseProvaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -46,8 +58,12 @@ export async function updateProva(
 
   try {
     await prisma.prova.update({ where: { id }, data: parsed.data });
-  } catch {
-    return { error: "Já existe uma prova com esses dados." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe uma prova com esses dados." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/provas");
@@ -55,6 +71,9 @@ export async function updateProva(
 }
 
 export async function deleteProva(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     await prisma.prova.delete({ where: { id } });
   } catch {

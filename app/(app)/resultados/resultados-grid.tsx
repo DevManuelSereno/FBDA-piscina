@@ -32,6 +32,7 @@ type LinhaEstado = {
   tempoRaw: string;
   colocacaoRaw: string;
   error: string | null;
+  warning: string | null;
 };
 
 function tempoInputId(atletaId: string) {
@@ -62,6 +63,7 @@ export function ResultadosGrid({
               : "",
           colocacaoRaw: linha.colocacao !== null ? String(linha.colocacao) : "",
           error: null,
+          warning: null,
         },
       ]),
     ),
@@ -91,7 +93,6 @@ export function ResultadosGrid({
         atletaId: linha.atletaId,
         provaId,
         competicaoId,
-        categoriaId: linha.categoriaId!,
         status: estado.status,
         tempoRaw: estado.tempoRaw,
         colocacaoRaw: estado.colocacaoRaw,
@@ -99,6 +100,7 @@ export function ResultadosGrid({
 
       atualizarEstado(linha.atletaId, {
         error: resultado.error ?? null,
+        warning: resultado.warning ?? null,
       });
       setSavingIds((prev) => {
         const next = new Set(prev);
@@ -196,6 +198,12 @@ export function ResultadosGrid({
                   )}
                 </TableCell>
                 <TableCell>
+                  {estado.warning && (
+                    <p className="mb-1 flex items-center gap-1 text-xs text-amber-600">
+                      <AlertTriangle className="size-3.5" aria-hidden="true" />
+                      {estado.warning}
+                    </p>
+                  )}
                   <Input
                     id={colocacaoInputId(linha.atletaId)}
                     aria-label={`Colocação de ${linha.nomeCompleto}`}

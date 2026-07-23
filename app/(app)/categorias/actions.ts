@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { categoriaSchema } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth-guard";
+import { isUniqueConstraintError } from "@/lib/prisma-errors";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -19,6 +21,9 @@ export async function createCategoria(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseCategoriaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -26,8 +31,12 @@ export async function createCategoria(
 
   try {
     await prisma.categoria.create({ data: parsed.data });
-  } catch {
-    return { error: "Já existe uma categoria com esse nome e sexo." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe uma categoria com esse nome e sexo." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/categorias");
@@ -39,6 +48,9 @@ export async function updateCategoria(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseCategoriaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -46,8 +58,12 @@ export async function updateCategoria(
 
   try {
     await prisma.categoria.update({ where: { id }, data: parsed.data });
-  } catch {
-    return { error: "Já existe uma categoria com esse nome e sexo." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe uma categoria com esse nome e sexo." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/categorias");
@@ -55,6 +71,9 @@ export async function updateCategoria(
 }
 
 export async function deleteCategoria(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     await prisma.categoria.delete({ where: { id } });
   } catch {

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { clubeSchema } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth-guard";
+import { isUniqueConstraintError } from "@/lib/prisma-errors";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -18,6 +20,9 @@ export async function createClube(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseClubeForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -25,8 +30,12 @@ export async function createClube(
 
   try {
     await prisma.clube.create({ data: parsed.data });
-  } catch {
-    return { error: "Já existe um clube com esse nome." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe um clube com esse nome." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/clubes");
@@ -38,6 +47,9 @@ export async function updateClube(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseClubeForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -45,8 +57,12 @@ export async function updateClube(
 
   try {
     await prisma.clube.update({ where: { id }, data: parsed.data });
-  } catch {
-    return { error: "Já existe um clube com esse nome." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { error: "Já existe um clube com esse nome." };
+    }
+    console.error(error);
+    return { error: "Não foi possível salvar. Tente novamente." };
   }
 
   revalidatePath("/clubes");
@@ -54,6 +70,9 @@ export async function updateClube(
 }
 
 export async function deleteClube(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     await prisma.clube.delete({ where: { id } });
   } catch {

@@ -16,8 +16,8 @@ describe("agregarRankingIndividual", () => {
     const ranking = agregarRankingIndividual(resultados);
 
     expect(ranking).toEqual([
-      { atletaId: "a1", atletaNome: "Ana", clubeNome: "Baía", pontos: 16 },
-      { atletaId: "a2", atletaNome: "Bruno", clubeNome: "Baía", pontos: 6 },
+      { posicao: 1, atletaId: "a1", atletaNome: "Ana", clubeNome: "Baía", pontos: 16 },
+      { posicao: 2, atletaId: "a2", atletaNome: "Bruno", clubeNome: "Baía", pontos: 6 },
     ]);
   });
 
@@ -35,6 +35,22 @@ describe("agregarRankingIndividual", () => {
   test("retorna lista vazia quando não há resultados", () => {
     expect(agregarRankingIndividual([])).toEqual([]);
   });
+
+  test("atletas empatados em pontos recebem a mesma posição, e a próxima posição pula o empate", () => {
+    const resultados: ResultadoParaRanking[] = [
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 9 },
+      { atletaId: "a2", atletaNome: "Bruno", clubeId: "c1", clubeNome: "Baía", pontos: 9 },
+      { atletaId: "a3", atletaNome: "Carla", clubeId: "c1", clubeNome: "Baía", pontos: 5 },
+    ];
+
+    const ranking = agregarRankingIndividual(resultados);
+
+    expect(ranking.map((r) => [r.posicao, r.pontos])).toEqual([
+      [1, 9],
+      [1, 9],
+      [3, 5],
+    ]);
+  });
 });
 
 describe("agregarRankingColetivo", () => {
@@ -48,8 +64,8 @@ describe("agregarRankingColetivo", () => {
     const ranking = agregarRankingColetivo(resultados);
 
     expect(ranking).toEqual([
-      { clubeId: "c1", clubeNome: "Baía", pontos: 16 },
-      { clubeId: "c2", clubeNome: "Golfinhos", pontos: 6 },
+      { posicao: 1, clubeId: "c1", clubeNome: "Baía", pontos: 16 },
+      { posicao: 2, clubeId: "c2", clubeNome: "Golfinhos", pontos: 6 },
     ]);
   });
 
@@ -66,5 +82,21 @@ describe("agregarRankingColetivo", () => {
 
   test("retorna lista vazia quando não há resultados", () => {
     expect(agregarRankingColetivo([])).toEqual([]);
+  });
+
+  test("clubes empatados em pontos recebem a mesma posição", () => {
+    const resultados: ResultadoParaRanking[] = [
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 10 },
+      { atletaId: "a2", atletaNome: "Bruno", clubeId: "c2", clubeNome: "Golfinhos", pontos: 10 },
+      { atletaId: "a3", atletaNome: "Carla", clubeId: "c3", clubeNome: "Municipal", pontos: 4 },
+    ];
+
+    const ranking = agregarRankingColetivo(resultados);
+
+    expect(ranking.map((r) => [r.posicao, r.pontos])).toEqual([
+      [1, 10],
+      [1, 10],
+      [3, 4],
+    ]);
   });
 });

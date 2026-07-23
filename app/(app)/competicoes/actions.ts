@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { competicaoSchema } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth-guard";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -19,6 +20,9 @@ export async function createCompeticao(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseCompeticaoForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -34,6 +38,9 @@ export async function updateCompeticao(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseCompeticaoForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -45,6 +52,9 @@ export async function updateCompeticao(
 }
 
 export async function deleteCompeticao(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     await prisma.competicao.delete({ where: { id } });
   } catch {

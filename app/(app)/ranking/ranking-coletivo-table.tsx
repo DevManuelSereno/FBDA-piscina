@@ -33,10 +33,10 @@ export function RankingColetivoTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {itens.map((item, index) => (
+          {itens.map((item) => (
             <TableRow key={item.clubeId}>
               <TableCell>
-                <PodioBadge posicao={index + 1} />
+                <PodioBadge posicao={item.posicao} />
               </TableCell>
               <TableCell className="font-medium">{item.clubeNome}</TableCell>
               <TableCell className="text-right font-semibold">

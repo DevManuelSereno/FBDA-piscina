@@ -34,10 +34,10 @@ export function RankingIndividualTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {itens.map((item, index) => (
+          {itens.map((item) => (
             <TableRow key={item.atletaId}>
               <TableCell>
-                <PodioBadge posicao={index + 1} />
+                <PodioBadge posicao={item.posicao} />
               </TableCell>
               <TableCell className="font-medium">{item.atletaNome}</TableCell>
               <TableCell className="text-muted-foreground">

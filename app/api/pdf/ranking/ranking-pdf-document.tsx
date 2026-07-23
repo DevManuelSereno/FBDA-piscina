@@ -169,12 +169,12 @@ export function RankingIndividualPdf({
             <Text style={styles.colClube}>Clube</Text>
             <Text style={styles.colPontos}>Pontos</Text>
           </View>
-          {itens.map((item, index) => (
+          {itens.map((item) => (
             <View
               key={item.atletaId}
-              style={[styles.linha, corLinha(index + 1)]}
+              style={[styles.linha, corLinha(item.posicao)]}
             >
-              <Text style={styles.colPosicao}>{index + 1}</Text>
+              <Text style={styles.colPosicao}>{item.posicao}</Text>
               <Text style={styles.colNome}>{item.atletaNome}</Text>
               <Text style={styles.colClube}>{item.clubeNome}</Text>
               <Text style={styles.colPontos}>{item.pontos}</Text>
@@ -223,12 +223,12 @@ export function RankingColetivoPdf({
             <Text style={styles.colNome}>Clube</Text>
             <Text style={styles.colPontos}>Pontos</Text>
           </View>
-          {itens.map((item, index) => (
+          {itens.map((item) => (
             <View
               key={item.clubeId}
-              style={[styles.linha, corLinha(index + 1)]}
+              style={[styles.linha, corLinha(item.posicao)]}
             >
-              <Text style={styles.colPosicao}>{index + 1}</Text>
+              <Text style={styles.colPosicao}>{item.posicao}</Text>
               <Text style={styles.colNome}>{item.clubeNome}</Text>
               <Text style={styles.colPontos}>{item.pontos}</Text>
             </View>

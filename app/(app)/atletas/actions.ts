@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { atletaSchema } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth-guard";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -20,6 +21,9 @@ export async function createAtleta(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseAtletaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -35,6 +39,9 @@ export async function updateAtleta(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const parsed = parseAtletaForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
@@ -46,6 +53,9 @@ export async function updateAtleta(
 }
 
 export async function deleteAtleta(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     await prisma.atleta.delete({ where: { id } });
   } catch {

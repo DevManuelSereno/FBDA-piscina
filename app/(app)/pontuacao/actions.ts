@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { calcularPontos, validarPosicoes, type PosicaoPontos } from "@/lib/scoring";
+import { requireAuth } from "@/lib/auth-guard";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -10,6 +11,9 @@ export async function createRegra(
   _prevState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const nome = String(formData.get("nome") ?? "").trim();
   const tipo = formData.get("tipo");
   if (!nome) {
@@ -28,6 +32,9 @@ export async function createRegra(
 }
 
 export async function ativarRegra(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   await prisma.$transaction([
     prisma.regraPontuacao.updateMany({ where: {}, data: { ativo: false } }),
     prisma.regraPontuacao.update({ where: { id }, data: { ativo: true } }),
@@ -38,6 +45,9 @@ export async function ativarRegra(id: string): Promise<ActionResult> {
 }
 
 export async function deleteRegra(id: string): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const regra = await prisma.regraPontuacao.findUnique({ where: { id } });
   if (regra?.ativo) {
     return {
@@ -54,6 +64,9 @@ export async function salvarPosicoes(
   regraId: string,
   posicoes: PosicaoPontos[],
 ): Promise<ActionResult> {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const erro = validarPosicoes(posicoes);
   if (erro) {
     return { error: erro };
@@ -77,6 +90,9 @@ export async function salvarPosicoes(
 export async function recalcularRanking(): Promise<
   ActionResult & { atualizados?: number }
 > {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const regraAtiva = await prisma.regraPontuacao.findFirst({
     where: { ativo: true },
     include: { posicoes: true },

@@ -36,7 +36,25 @@ export function parseResultadoInput(
   }
 
   const colocacaoRaw = input.colocacaoRaw.trim();
-  const colocacao = colocacaoRaw ? Number(colocacaoRaw) : null;
+  let colocacao: number | null = null;
+  if (colocacaoRaw) {
+    const valor = Number(colocacaoRaw);
+    if (!Number.isInteger(valor) || valor < 1) {
+      return { error: "Colocação inválida." };
+    }
+    colocacao = valor;
+  }
 
   return { status: "VALIDO", tempoCentesimos, colocacao };
+}
+
+export function temColocacaoDuplicada(
+  existentes: { atletaId: string; colocacao: number | null }[],
+  atletaIdAtual: string,
+  colocacaoAtual: number | null,
+): boolean {
+  if (colocacaoAtual === null) return false;
+  return existentes.some(
+    (r) => r.atletaId !== atletaIdAtual && r.colocacao === colocacaoAtual,
+  );
 }
