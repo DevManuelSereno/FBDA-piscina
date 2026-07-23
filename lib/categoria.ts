@@ -4,6 +4,10 @@ export type CategoriaRange = {
   sexo: string;
   idadeMin: number;
   idadeMax: number;
+  circuitoId: string;
+  // Categorias como PCD/PRE existem no cadastro mas não devem ser
+  // atribuídas automaticamente por idade — só por override manual (futuro).
+  autoClassificavel: boolean;
 };
 
 // Idade "completada no ano" — regra padrão de categorias de base no
@@ -21,10 +25,13 @@ export function inferirCategoria(
   sexoAtleta: string,
   dataReferencia: Date,
   categorias: CategoriaRange[],
+  circuitoId: string,
 ): CategoriaRange | null {
   const idade = calcularIdadeNoAno(dataNascimento, dataReferencia);
   const categoria = categorias.find(
     (c) =>
+      c.circuitoId === circuitoId &&
+      c.autoClassificavel &&
       idade >= c.idadeMin &&
       idade <= c.idadeMax &&
       (c.sexo === "MISTO" || c.sexo === sexoAtleta),

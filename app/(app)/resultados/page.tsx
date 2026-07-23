@@ -6,22 +6,34 @@ import { ResultadosGrid, type LinhaResultado } from "./resultados-grid";
 export default async function ResultadosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ competicaoId?: string; provaId?: string }>;
+  searchParams: Promise<{
+    circuitoId?: string;
+    competicaoId?: string;
+    provaId?: string;
+  }>;
 }) {
   const params = await searchParams;
-  const competicaoId = params.competicaoId ?? "";
-  const provaId = params.provaId ?? "";
 
-  const [competicoes, provas] = await Promise.all([
+  const [circuitos, competicoes, provas] = await Promise.all([
+    prisma.circuito.findMany({
+      where: { ativo: true },
+      orderBy: { ordem: "asc" },
+    }),
     prisma.competicao.findMany({ orderBy: { data: "desc" } }),
     prisma.prova.findMany({
       orderBy: [{ distancia: "asc" }, { nome: "asc" }],
     }),
   ]);
 
+  // Sem circuito selecionado na URL, cai no primeiro ativo (menor ordem) —
+  // a classificação por idade depende de um circuito estar sempre definido.
+  const circuitoId = params.circuitoId || circuitos[0]?.id || "";
+  const competicaoId = params.competicaoId ?? "";
+  const provaId = params.provaId ?? "";
+
   let linhas: LinhaResultado[] = [];
 
-  if (competicaoId && provaId) {
+  if (circuitoId && competicaoId && provaId) {
     const competicao = competicoes.find((c) => c.id === competicaoId);
     const [atletas, categorias, resultados] = await Promise.all([
       prisma.atleta.findMany({
@@ -43,6 +55,7 @@ export default async function ResultadosPage({
         atleta.sexo,
         competicao?.data ?? new Date(),
         categorias,
+        circuitoId,
       );
       const resultado = resultadoPorAtleta.get(atleta.id);
 
@@ -68,27 +81,30 @@ export default async function ResultadosPage({
           Lançamento de Resultados
         </h1>
         <p className="text-muted-foreground">
-          Selecione a competição e a prova para digitar os tempos.
+          Selecione o circuito, a competição e a prova para digitar os tempos.
         </p>
       </div>
 
       <SeletorCompeticaoProva
+        circuitos={circuitos}
         competicoes={competicoes}
         provas={provas}
+        circuitoIdAtual={circuitoId}
         competicaoIdAtual={competicaoId}
         provaIdAtual={provaId}
       />
 
-      {competicaoId && provaId ? (
+      {circuitoId && competicaoId && provaId ? (
         <ResultadosGrid
           linhas={linhas}
           provaId={provaId}
           competicaoId={competicaoId}
+          circuitoId={circuitoId}
         />
       ) : (
         <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
-          Selecione uma competição e uma prova acima para começar o
-          lançamento.
+          Selecione um circuito, uma competição e uma prova acima para
+          começar o lançamento.
         </div>
       )}
     </div>

@@ -46,10 +46,12 @@ export function ResultadosGrid({
   linhas,
   provaId,
   competicaoId,
+  circuitoId,
 }: {
   linhas: LinhaResultado[];
   provaId: string;
   competicaoId: string;
+  circuitoId: string;
 }) {
   const [estados, setEstados] = useState<Record<string, LinhaEstado>>(() =>
     Object.fromEntries(
@@ -93,6 +95,7 @@ export function ResultadosGrid({
         atletaId: linha.atletaId,
         provaId,
         competicaoId,
+        circuitoId,
         status: estado.status,
         tempoRaw: estado.tempoRaw,
         colocacaoRaw: estado.colocacaoRaw,

@@ -5,23 +5,28 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 
 type SeletorProps = {
+  circuitos: { id: string; nome: string }[];
   competicoes: { id: string; nome: string }[];
   provas: { id: string; nome: string }[];
+  circuitoIdAtual: string;
   competicaoIdAtual: string;
   provaIdAtual: string;
 };
 
 export function SeletorCompeticaoProva({
+  circuitos,
   competicoes,
   provas,
+  circuitoIdAtual,
   competicaoIdAtual,
   provaIdAtual,
 }: SeletorProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  function navegar(competicaoId: string, provaId: string) {
+  function navegar(circuitoId: string, competicaoId: string, provaId: string) {
     const params = new URLSearchParams();
+    if (circuitoId) params.set("circuitoId", circuitoId);
     if (competicaoId) params.set("competicaoId", competicaoId);
     if (provaId) params.set("provaId", provaId);
     const query = params.toString();
@@ -29,13 +34,31 @@ export function SeletorCompeticaoProva({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:max-w-2xl sm:grid-cols-3">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="circuitoId">Circuito</Label>
+        <NativeSelect
+          id="circuitoId"
+          value={circuitoIdAtual}
+          onChange={(event) =>
+            navegar(event.target.value, competicaoIdAtual, provaIdAtual)
+          }
+        >
+          {circuitos.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="competicaoId">Competição</Label>
         <NativeSelect
           id="competicaoId"
           value={competicaoIdAtual}
-          onChange={(event) => navegar(event.target.value, provaIdAtual)}
+          onChange={(event) =>
+            navegar(circuitoIdAtual, event.target.value, provaIdAtual)
+          }
         >
           <option value="">Selecione...</option>
           {competicoes.map((c) => (
@@ -50,7 +73,9 @@ export function SeletorCompeticaoProva({
         <NativeSelect
           id="provaId"
           value={provaIdAtual}
-          onChange={(event) => navegar(competicaoIdAtual, event.target.value)}
+          onChange={(event) =>
+            navegar(circuitoIdAtual, competicaoIdAtual, event.target.value)
+          }
         >
           <option value="">Selecione...</option>
           {provas.map((p) => (

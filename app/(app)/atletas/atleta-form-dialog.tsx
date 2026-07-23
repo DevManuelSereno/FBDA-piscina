@@ -25,6 +25,7 @@ type Atleta = {
   sexo: string;
   clubeId: string;
   ativo: boolean;
+  numero: number | null;
 };
 
 type AtletaFormDialogProps = (
@@ -112,6 +113,16 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                   ))}
                 </NativeSelect>
               </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="numero">Número de inscrição (opcional)</Label>
+              <Input
+                id="numero"
+                name="numero"
+                type="number"
+                min={1}
+                defaultValue={atleta?.numero ?? undefined}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="clubeId">Clube</Label>

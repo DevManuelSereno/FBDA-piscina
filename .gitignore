@@ -48,3 +48,6 @@ next-env.d.ts
 /dev.db-journal
 /prisma/dev.db
 /prisma/dev.db-journal
+
+# extra archives for searching and planning purposes, not needed for production
+/extras

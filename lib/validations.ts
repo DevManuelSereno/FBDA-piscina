@@ -12,6 +12,13 @@ export const clubeSchema = z.object({
 });
 export type ClubeInput = z.infer<typeof clubeSchema>;
 
+export const circuitoSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o nome do circuito."),
+  ordem: z.coerce.number("Ordem inválida.").int().default(0),
+  ativo: z.coerce.boolean().default(true),
+});
+export type CircuitoInput = z.infer<typeof circuitoSchema>;
+
 export const SEXO_CATEGORIA = ["M", "F", "MISTO"] as const;
 export const categoriaSchema = z
   .object({
@@ -19,6 +26,9 @@ export const categoriaSchema = z
     sexo: z.enum(SEXO_CATEGORIA),
     idadeMin: z.coerce.number("Idade mínima inválida.").int().min(0),
     idadeMax: z.coerce.number("Idade máxima inválida.").int().min(0),
+    circuitoId: z.string().min(1, "Selecione um circuito."),
+    ordem: z.coerce.number("Ordem inválida.").int().default(0),
+    autoClassificavel: z.coerce.boolean().default(true),
   })
   .refine((data) => data.idadeMax >= data.idadeMin, {
     message: "Idade máxima deve ser maior ou igual à idade mínima.",
@@ -54,6 +64,12 @@ export const atletaSchema = z.object({
   sexo: z.enum(SEXO_ATLETA),
   clubeId: z.string().min(1, "Selecione um clube."),
   ativo: z.coerce.boolean().default(true),
+  numero: z.coerce
+    .number("Número inválido.")
+    .int()
+    .positive("Número deve ser maior que zero.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 export type AtletaInput = z.infer<typeof atletaSchema>;
 

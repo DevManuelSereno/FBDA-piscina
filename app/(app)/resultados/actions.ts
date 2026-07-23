@@ -15,6 +15,7 @@ export type SalvarResultadoInput = {
   atletaId: string;
   provaId: string;
   competicaoId: string;
+  circuitoId: string;
   status: ResultadoStatus;
   tempoRaw: string;
   colocacaoRaw: string;
@@ -57,6 +58,7 @@ export async function salvarResultado(
     atleta.sexo,
     competicao.data,
     categorias,
+    input.circuitoId,
   );
 
   if (!categoria) {

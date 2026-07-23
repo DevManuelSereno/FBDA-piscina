@@ -24,11 +24,17 @@ type Categoria = {
   sexo: string;
   idadeMin: number;
   idadeMax: number;
+  ordem: number;
+  autoClassificavel: boolean;
+  circuitoId: string;
 };
 
-type CategoriaFormDialogProps =
+type CategoriaFormDialogProps = (
   | { mode: "create" }
-  | { mode: "edit"; categoria: Categoria };
+  | { mode: "edit"; categoria: Categoria }
+) & {
+  circuitos: { id: string; nome: string }[];
+};
 
 const initialState: ActionResult = {};
 
@@ -72,6 +78,24 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
           </DialogHeader>
           <form action={formAction} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
+              <Label htmlFor="circuitoId">Circuito</Label>
+              <NativeSelect
+                id="circuitoId"
+                name="circuitoId"
+                defaultValue={categoria?.circuitoId ?? ""}
+                required
+              >
+                <option value="" disabled>
+                  Selecione um circuito
+                </option>
+                {props.circuitos.map((circuito) => (
+                  <option key={circuito.id} value={circuito.id}>
+                    {circuito.nome}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor="nome">Nome</Label>
               <Input
                 id="nome"
@@ -81,19 +105,32 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
                 minLength={2}
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="sexo">Sexo</Label>
-              <NativeSelect
-                id="sexo"
-                name="sexo"
-                defaultValue={categoria?.sexo ?? "M"}
-              >
-                {SEXO_CATEGORIA.map((sexo) => (
-                  <option key={sexo} value={sexo}>
-                    {sexo}
-                  </option>
-                ))}
-              </NativeSelect>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sexo">Sexo</Label>
+                <NativeSelect
+                  id="sexo"
+                  name="sexo"
+                  defaultValue={categoria?.sexo ?? "M"}
+                >
+                  {SEXO_CATEGORIA.map((sexo) => (
+                    <option key={sexo} value={sexo}>
+                      {sexo}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="ordem">Ordem</Label>
+                <Input
+                  id="ordem"
+                  name="ordem"
+                  type="number"
+                  min={0}
+                  defaultValue={categoria?.ordem ?? 0}
+                  required
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
@@ -119,6 +156,19 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
                 />
               </div>
             </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="autoClassificavel"
+                defaultChecked={categoria?.autoClassificavel ?? true}
+                className="size-4 rounded border-input"
+              />
+              Classificar atletas automaticamente por idade
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Desmarque para categorias especiais (ex.: PCD, Pré-Master) cuja
+              atribuição não segue apenas a faixa etária.
+            </p>
 
             {state.error && (
               <p role="alert" className="text-sm font-medium text-destructive">

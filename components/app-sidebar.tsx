@@ -7,6 +7,7 @@ import {
   Calculator,
   CalendarDays,
   ClipboardList,
+  GitBranch,
   Layers,
   LayoutDashboard,
   Trophy,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const cadastroItems = [
+  { title: "Circuitos", url: "/circuitos", icon: GitBranch },
   { title: "Clubes", url: "/clubes", icon: Building2 },
   { title: "Categorias", url: "/categorias", icon: Layers },
   { title: "Provas", url: "/provas", icon: Waves },

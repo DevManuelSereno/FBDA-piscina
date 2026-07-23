@@ -9,6 +9,7 @@ import {
 
 export type FiltrosRankingQuery = {
   tipo: "completo" | "provisorio";
+  circuitoId: string;
   competicaoId: string;
   categoriaId: string;
   clubeId: string;
@@ -30,6 +31,10 @@ export async function buscarRanking(filtros: FiltrosRankingQuery): Promise<{
   }
   if (filtros.categoriaId) {
     where.categoriaId = filtros.categoriaId;
+  } else if (filtros.circuitoId) {
+    // Sem categoria específica, ainda assim não misturamos circuitos —
+    // cada circuito é um ranking independente.
+    where.categoria = { circuitoId: filtros.circuitoId };
   }
 
   const atletaWhere: Prisma.AtletaWhereInput = {};

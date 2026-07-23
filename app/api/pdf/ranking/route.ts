@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
   const filtros: FiltrosRankingQuery = {
     tipo: params.get("tipo") === "provisorio" ? "provisorio" : "completo",
+    circuitoId: params.get("circuitoId") ?? "",
     competicaoId: params.get("competicaoId") ?? "",
     categoriaId: params.get("categoriaId") ?? "",
     clubeId: params.get("clubeId") ?? "",
@@ -25,9 +26,12 @@ export async function GET(request: NextRequest) {
   };
   const modo = params.get("modo") === "coletivo" ? "coletivo" : "individual";
 
-  const [{ individual, coletivo }, competicao, categoria, clube] =
+  const [{ individual, coletivo }, circuito, competicao, categoria, clube] =
     await Promise.all([
       buscarRanking(filtros),
+      filtros.circuitoId
+        ? prisma.circuito.findUnique({ where: { id: filtros.circuitoId } })
+        : null,
       filtros.competicaoId
         ? prisma.competicao.findUnique({ where: { id: filtros.competicaoId } })
         : null,
@@ -46,6 +50,7 @@ export async function GET(request: NextRequest) {
 
   const filtrosLabel: FiltrosLabel = {
     escopo,
+    circuitoNome: circuito?.nome,
     categoriaNome: categoria ? `${categoria.nome} (${categoria.sexo})` : undefined,
     clubeNome: clube?.nome,
     sexo: filtros.sexo || undefined,

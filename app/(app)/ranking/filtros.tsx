@@ -6,6 +6,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 
 export type FiltrosRankingValores = {
   tipo: "completo" | "provisorio";
+  circuitoId: string;
   competicaoId: string;
   categoriaId: string;
   clubeId: string;
@@ -15,6 +16,7 @@ export type FiltrosRankingValores = {
 
 type FiltrosRankingProps = {
   valores: FiltrosRankingValores;
+  circuitos: { id: string; nome: string }[];
   competicoes: { id: string; nome: string }[];
   categorias: { id: string; nome: string; sexo: string }[];
   clubes: { id: string; nome: string }[];
@@ -23,6 +25,7 @@ type FiltrosRankingProps = {
 
 export function FiltrosRanking({
   valores,
+  circuitos,
   competicoes,
   categorias,
   clubes,
@@ -33,8 +36,14 @@ export function FiltrosRanking({
 
   function atualizar(patch: Partial<FiltrosRankingValores>) {
     const novos = { ...valores, ...patch };
+    // Trocar de circuito invalida a categoria selecionada (ela pertence
+    // a um circuito específico).
+    if (patch.circuitoId !== undefined) {
+      novos.categoriaId = "";
+    }
     const params = new URLSearchParams();
     if (novos.tipo) params.set("tipo", novos.tipo);
+    if (novos.circuitoId) params.set("circuitoId", novos.circuitoId);
     if (novos.tipo === "provisorio" && novos.competicaoId) {
       params.set("competicaoId", novos.competicaoId);
     }
@@ -48,7 +57,23 @@ export function FiltrosRanking({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="circuitoId">Circuito</Label>
+        <NativeSelect
+          id="circuitoId"
+          value={valores.circuitoId}
+          onChange={(e) => atualizar({ circuitoId: e.target.value })}
+        >
+          <option value="">Todos</option>
+          {circuitos.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="tipo">Escopo</Label>
         <NativeSelect

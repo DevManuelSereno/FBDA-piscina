@@ -14,6 +14,7 @@ function parseAtletaForm(formData: FormData) {
     sexo: formData.get("sexo"),
     clubeId: formData.get("clubeId"),
     ativo: formData.get("ativo") === "on",
+    numero: formData.get("numero"),
   });
 }
 

@@ -12,7 +12,9 @@ export type AtletaRow = {
   clubeId: string;
   clubeNome: string;
   ativo: boolean;
+  numero: number | null;
   categoriaAtual: string | null;
+  circuitoAtualNome: string | null;
 };
 
 type AtletaColumnsProps = {
@@ -23,6 +25,11 @@ export function buildColumns({
   clubes,
 }: AtletaColumnsProps): ColumnDef<AtletaRow>[] {
   return [
+    {
+      id: "numero",
+      header: "Nº",
+      cell: ({ row }) => row.original.numero ?? "—",
+    },
     { accessorKey: "nomeCompleto", header: "Nome" },
     { accessorKey: "clubeNome", header: "Clube" },
     { accessorKey: "sexo", header: "Sexo" },
@@ -35,7 +42,10 @@ export function buildColumns({
     {
       id: "categoriaAtual",
       header: "Categoria atual",
-      cell: ({ row }) => row.original.categoriaAtual ?? "—",
+      cell: ({ row }) =>
+        row.original.categoriaAtual
+          ? `${row.original.categoriaAtual} (${row.original.circuitoAtualNome})`
+          : "—",
     },
     {
       id: "ativo",

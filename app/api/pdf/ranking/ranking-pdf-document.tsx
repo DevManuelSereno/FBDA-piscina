@@ -100,6 +100,7 @@ function corLinha(posicao: number) {
 
 export type FiltrosLabel = {
   escopo: string;
+  circuitoNome?: string;
   categoriaNome?: string;
   clubeNome?: string;
   sexo?: string;
@@ -114,6 +115,7 @@ function Cabecalho({
 }) {
   const partesFiltro = [
     filtros.escopo,
+    filtros.circuitoNome && `Circuito: ${filtros.circuitoNome}`,
     filtros.categoriaNome && `Categoria: ${filtros.categoriaNome}`,
     filtros.clubeNome && `Clube: ${filtros.clubeNome}`,
     filtros.sexo && `Sexo: ${filtros.sexo}`,

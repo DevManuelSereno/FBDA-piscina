@@ -30,19 +30,45 @@ model Clube {
   @@unique([nome])
 }
 
+// Circuito: cada "planilha"/competição paralela do cliente (ex.: "Infantil a
+// Sênior", "Master"). Categorias e competições pertencem a um único circuito
+// — os rankings não se misturam entre circuitos.
+model Circuito {
+  id    String  @id @default(cuid())
+  nome  String
+  ordem Int     @default(0)
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categorias Categoria[]
+
+  @@unique([nome])
+}
+
 model Categoria {
-  id       String @id @default(cuid())
-  nome     String
-  sexo     String // "M" | "F" | "MISTO"
-  idadeMin Int
-  idadeMax Int
+  id                String  @id @default(cuid())
+  nome              String
+  sexo              String // "M" | "F" | "MISTO"
+  idadeMin          Int
+  idadeMax          Int
+  // Ordena a categoria dentro do circuito (ex.: INF1 < INF2 < ... < SR)
+  // para listagens e o relatório matriz (Etapa 12).
+  ordem             Int     @default(0)
+  // Categorias como PCD/PRE (circuito Master) existem no cadastro mas não
+  // devem ser atribuídas automaticamente por idade — ver lib/categoria.ts.
+  autoClassificavel Boolean @default(true)
+
+  circuitoId String
+  circuito   Circuito @relation(fields: [circuitoId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   resultados Resultado[]
 
-  @@unique([nome, sexo])
+  @@unique([circuitoId, nome, sexo])
 }
 
 model Atleta {
@@ -51,6 +77,9 @@ model Atleta {
   dataNascimento DateTime
   sexo           String // "M" | "F"
   ativo          Boolean  @default(true)
+  // Número/código de inscrição do atleta na federação (coluna "N." nas
+  // planilhas do cliente). Opcional, apenas informativo.
+  numero         Int?
 
   clubeId String
   clube   Clube  @relation(fields: [clubeId], references: [id])

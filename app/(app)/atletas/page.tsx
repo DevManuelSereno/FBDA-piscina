@@ -5,23 +5,33 @@ import { AtletasTable } from "./atletas-table";
 import type { AtletaRow } from "./columns";
 
 export default async function AtletasPage() {
-  const [atletas, clubes, categorias] = await Promise.all([
+  const [atletas, clubes, categorias, circuitoPadrao] = await Promise.all([
     prisma.atleta.findMany({
       orderBy: { nomeCompleto: "asc" },
       include: { clube: true },
     }),
     prisma.clube.findMany({ orderBy: { nome: "asc" } }),
     prisma.categoria.findMany(),
+    prisma.circuito.findFirst({
+      where: { ativo: true },
+      orderBy: { ordem: "asc" },
+    }),
   ]);
 
+  // A "categoria atual" exibida aqui é só uma prévia sob o circuito padrão
+  // (o de menor ordem) — o atleta pode competir em mais de um circuito;
+  // a classificação real acontece por circuito na tela de Resultados.
   const hoje = new Date();
   const rows: AtletaRow[] = atletas.map((atleta) => {
-    const categoria = inferirCategoria(
-      atleta.dataNascimento,
-      atleta.sexo,
-      hoje,
-      categorias,
-    );
+    const categoria = circuitoPadrao
+      ? inferirCategoria(
+          atleta.dataNascimento,
+          atleta.sexo,
+          hoje,
+          categorias,
+          circuitoPadrao.id,
+        )
+      : null;
     return {
       id: atleta.id,
       nomeCompleto: atleta.nomeCompleto,
@@ -30,7 +40,9 @@ export default async function AtletasPage() {
       clubeId: atleta.clubeId,
       clubeNome: atleta.clube.nome,
       ativo: atleta.ativo,
+      numero: atleta.numero,
       categoriaAtual: categoria ? `${categoria.nome} (${categoria.sexo})` : null,
+      circuitoAtualNome: circuitoPadrao?.nome ?? null,
     };
   });
 

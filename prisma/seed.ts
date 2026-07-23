@@ -17,6 +17,7 @@ async function limparBanco() {
   await prisma.competicao.deleteMany();
   await prisma.prova.deleteMany();
   await prisma.categoria.deleteMany();
+  await prisma.circuito.deleteMany();
   await prisma.clube.deleteMany();
   await prisma.usuario.deleteMany();
 }
@@ -40,21 +41,92 @@ async function main() {
     }),
   ]);
 
-  const categoriasData = [
-    { nome: "Petiz", sexo: "M", idadeMin: 0, idadeMax: 10 },
-    { nome: "Petiz", sexo: "F", idadeMin: 0, idadeMax: 10 },
-    { nome: "Infantil", sexo: "M", idadeMin: 11, idadeMax: 12 },
-    { nome: "Infantil", sexo: "F", idadeMin: 11, idadeMax: 12 },
-    { nome: "Juvenil", sexo: "M", idadeMin: 13, idadeMax: 14 },
-    { nome: "Juvenil", sexo: "F", idadeMin: 13, idadeMax: 14 },
-    { nome: "Júnior", sexo: "M", idadeMin: 15, idadeMax: 17 },
-    { nome: "Júnior", sexo: "F", idadeMin: 15, idadeMax: 17 },
-    { nome: "Sênior", sexo: "M", idadeMin: 18, idadeMax: 99 },
-    { nome: "Sênior", sexo: "F", idadeMin: 18, idadeMax: 99 },
+  // Circuitos: rankings independentes, refletindo as duas planilhas reais
+  // do cliente (ver extras/). Cada circuito tem suas próprias classes.
+  const [circuitoJovem, circuitoMaster] = await Promise.all([
+    prisma.circuito.create({
+      data: { nome: "Infantil a Sênior", ordem: 1 },
+    }),
+    prisma.circuito.create({ data: { nome: "Master", ordem: 2 } }),
+  ]);
+
+  // Circuito "Infantil a Sênior": os NOMES das classes (INF1, INF2, JV1,
+  // JV2, J1, J2, SR) vêm da planilha real do cliente (extras/Infantil a
+  // Sênior - Masculino.xlsx). A planilha NÃO informa idade/data de
+  // nascimento — por isso os cortes de idade abaixo são PLACEHOLDER,
+  // ainda não confirmados pela FBDA. Ajustar assim que o cliente informar
+  // os cortes oficiais (ver docs/decisions.md).
+  const classesJovem: {
+    nome: string;
+    idadeMin: number;
+    idadeMax: number;
+    ordem: number;
+  }[] = [
+    { nome: "INF1", idadeMin: 10, idadeMax: 11, ordem: 1 },
+    { nome: "INF2", idadeMin: 12, idadeMax: 13, ordem: 2 },
+    { nome: "JV1", idadeMin: 14, idadeMax: 14, ordem: 3 },
+    { nome: "JV2", idadeMin: 15, idadeMax: 15, ordem: 4 },
+    { nome: "J1", idadeMin: 16, idadeMax: 16, ordem: 5 },
+    { nome: "J2", idadeMin: 17, idadeMax: 17, ordem: 6 },
+    { nome: "SR", idadeMin: 18, idadeMax: 99, ordem: 7 },
   ];
-  await Promise.all(
-    categoriasData.map((c) => prisma.categoria.create({ data: c })),
-  );
+
+  // Circuito "Master": as classes SÃO faixas etárias explícitas na planilha
+  // real (extras/Master - Masculino.xlsx) — 25+, 30+, ..., 75+ — não há
+  // invenção aqui. "PRE" e "PCD" também aparecem na planilha, mas não são
+  // faixas etárias (PRE = pré-master; PCD = pessoa com deficiência), por
+  // isso ficam com autoClassificavel=false (cadastradas, sem auto-atribuição
+  // por idade).
+  const bandasMaster = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
+  const classesMaster: {
+    nome: string;
+    idadeMin: number;
+    idadeMax: number;
+    ordem: number;
+    autoClassificavel: boolean;
+  }[] = [
+    { nome: "PRE", idadeMin: 18, idadeMax: 24, ordem: 0, autoClassificavel: false },
+    ...bandasMaster.map((min, index) => ({
+      nome: `${min}+`,
+      idadeMin: min,
+      idadeMax: index === bandasMaster.length - 1 ? 99 : bandasMaster[index + 1] - 1,
+      ordem: index + 1,
+      autoClassificavel: true,
+    })),
+    { nome: "PCD", idadeMin: 0, idadeMax: 99, ordem: 99, autoClassificavel: false },
+  ];
+
+  await Promise.all([
+    ...classesJovem.flatMap((c) =>
+      ["M", "F"].map((sexo) =>
+        prisma.categoria.create({
+          data: {
+            nome: c.nome,
+            sexo,
+            idadeMin: c.idadeMin,
+            idadeMax: c.idadeMax,
+            ordem: c.ordem,
+            circuitoId: circuitoJovem.id,
+          },
+        }),
+      ),
+    ),
+    ...classesMaster.flatMap((c) =>
+      ["M", "F"].map((sexo) =>
+        prisma.categoria.create({
+          data: {
+            nome: c.nome,
+            sexo,
+            idadeMin: c.idadeMin,
+            idadeMax: c.idadeMax,
+            ordem: c.ordem,
+            autoClassificavel: c.autoClassificavel,
+            circuitoId: circuitoMaster.id,
+          },
+        }),
+      ),
+    ),
+  ]);
 
   await Promise.all(
     [
@@ -87,6 +159,7 @@ async function main() {
         dataNascimento: new Date("2009-04-12"),
         sexo: "F",
         clubeId: clubeMunicipal.id,
+        numero: 1,
       },
     }),
     prisma.atleta.create({
@@ -95,6 +168,7 @@ async function main() {
         dataNascimento: new Date("2008-11-03"),
         sexo: "M",
         clubeId: clubeMunicipal.id,
+        numero: 2,
       },
     }),
     prisma.atleta.create({

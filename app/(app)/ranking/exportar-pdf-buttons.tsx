@@ -6,6 +6,7 @@ function montarQuery(valores: FiltrosRankingValores, modo: "individual" | "colet
   const params = new URLSearchParams();
   params.set("modo", modo);
   params.set("tipo", valores.tipo);
+  if (valores.circuitoId) params.set("circuitoId", valores.circuitoId);
   if (valores.tipo === "provisorio" && valores.competicaoId) {
     params.set("competicaoId", valores.competicaoId);
   }
