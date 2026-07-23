@@ -1,5 +1,5 @@
 import { FileDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import type { FiltrosRankingValores } from "./filtros";
 
 function montarQuery(valores: FiltrosRankingValores, modo: "individual" | "coletivo") {
@@ -25,26 +25,20 @@ export function ExportarPdfButtons({
 }) {
   return (
     <div className="flex shrink-0 gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        render={
-          <a href={`/api/pdf/ranking?${montarQuery(valores, "individual")}`} />
-        }
+      <a
+        href={`/api/pdf/ranking?${montarQuery(valores, "individual")}`}
+        className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <FileDown className="size-4" />
         PDF Individual
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        render={
-          <a href={`/api/pdf/ranking?${montarQuery(valores, "coletivo")}`} />
-        }
+      </a>
+      <a
+        href={`/api/pdf/ranking?${montarQuery(valores, "coletivo")}`}
+        className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <FileDown className="size-4" />
         PDF Coletivo
-      </Button>
+      </a>
     </div>
   );
 }
