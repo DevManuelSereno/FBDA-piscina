@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { calcularPontos, validarPosicoes, type PosicaoPontos } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth-guard";
+import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -116,7 +117,54 @@ export async function recalcularRanking(): Promise<
     }),
   );
 
+  // Reconstrói o rollup PontuacaoCompeticao (fonte do ranking) a partir
+  // dos pontos recém-recalculados, agrupando por atleta+competição.
+  const todosResultados = await prisma.resultado.findMany({
+    select: { atletaId: true, competicaoId: true, categoriaId: true, pontos: true },
+  });
+  const grupos = new Map<
+    string,
+    { atletaId: string; competicaoId: string; categoriaId: string; itens: { pontos: number }[] }
+  >();
+  for (const r of todosResultados) {
+    const chave = `${r.atletaId}:${r.competicaoId}`;
+    const atual = grupos.get(chave);
+    if (atual) {
+      atual.itens.push({ pontos: r.pontos });
+    } else {
+      grupos.set(chave, {
+        atletaId: r.atletaId,
+        competicaoId: r.competicaoId,
+        categoriaId: r.categoriaId,
+        itens: [{ pontos: r.pontos }],
+      });
+    }
+  }
+
+  await prisma.$transaction(
+    [...grupos.values()].map((g) => {
+      const pontos = calcularPontosCompeticao(g.itens);
+      return prisma.pontuacaoCompeticao.upsert({
+        where: {
+          atletaId_competicaoId: {
+            atletaId: g.atletaId,
+            competicaoId: g.competicaoId,
+          },
+        },
+        create: {
+          atletaId: g.atletaId,
+          competicaoId: g.competicaoId,
+          categoriaId: g.categoriaId,
+          pontos,
+          origem: "CALCULADO",
+        },
+        update: { categoriaId: g.categoriaId, pontos, origem: "CALCULADO" },
+      });
+    }),
+  );
+
   revalidatePath("/resultados");
   revalidatePath("/pontuacao");
+  revalidatePath("/ranking");
   return { success: true, atualizados: resultados.length };
 }

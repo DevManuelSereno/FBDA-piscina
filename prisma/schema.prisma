@@ -97,7 +97,8 @@ model Categoria {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  resultados Resultado[]
+  resultados           Resultado[]
+  pontuacoesCompeticao PontuacaoCompeticao[]
 
   @@unique([circuitoId, nome, sexo])
 }
@@ -115,7 +116,8 @@ model Atleta {
   clubeId String
   clube   Clube  @relation(fields: [clubeId], references: [id])
 
-  resultados Resultado[]
+  resultados           Resultado[]
+  pontuacoesCompeticao PontuacaoCompeticao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -148,7 +150,8 @@ model Competicao {
   tipoCompeticaoId String
   tipoCompeticao   TipoCompeticao @relation(fields: [tipoCompeticaoId], references: [id])
 
-  resultados Resultado[]
+  resultados           Resultado[]
+  pontuacoesCompeticao PontuacaoCompeticao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -183,6 +186,35 @@ model Resultado {
 
   @@unique([atletaId, provaId, competicaoId])
   @@index([competicaoId, provaId])
+  @@index([categoriaId])
+}
+
+// PontuacaoCompeticao: camada de rollup — 1 linha por atleta×competição,
+// fonte única do ranking e do futuro relatório matriz (Etapa 12).
+// COLOCACAO: derivada automaticamente da soma de Resultado.pontos daquele
+// atleta na competição (ver lib/pontuacao-competicao.ts). MANUAL: digitada
+// direto na tela /lancamento-pontos, sem Resultado nenhum por trás.
+model PontuacaoCompeticao {
+  id String @id @default(cuid())
+
+  atletaId String
+  atleta   Atleta @relation(fields: [atletaId], references: [id], onDelete: Cascade)
+
+  competicaoId String
+  competicao   Competicao @relation(fields: [competicaoId], references: [id], onDelete: Cascade)
+
+  // Categoria disputada — mesmo raciocínio de snapshot do Resultado.
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  pontos Float  @default(0)
+  origem String // "CALCULADO" | "MANUAL"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([atletaId, competicaoId])
+  @@index([competicaoId])
   @@index([categoriaId])
 }
 

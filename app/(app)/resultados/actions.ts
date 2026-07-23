@@ -10,6 +10,7 @@ import {
   type ResultadoStatus,
 } from "@/lib/resultado";
 import { calcularPontos } from "@/lib/scoring";
+import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
 
 export type SalvarResultadoInput = {
   atletaId: string;
@@ -120,6 +121,33 @@ export async function salvarResultado(
         tempoCentesimos: parsed.tempoCentesimos,
         colocacao: parsed.colocacao,
         pontos,
+      },
+    });
+
+    // Deriva o rollup PontuacaoCompeticao (fonte do ranking) a partir da
+    // soma de todos os resultados desse atleta nessa competição.
+    const resultadosAtleta = await prisma.resultado.findMany({
+      where: { atletaId: input.atletaId, competicaoId: input.competicaoId },
+      select: { pontos: true },
+    });
+    await prisma.pontuacaoCompeticao.upsert({
+      where: {
+        atletaId_competicaoId: {
+          atletaId: input.atletaId,
+          competicaoId: input.competicaoId,
+        },
+      },
+      create: {
+        atletaId: input.atletaId,
+        competicaoId: input.competicaoId,
+        categoriaId: categoria.id,
+        pontos: calcularPontosCompeticao(resultadosAtleta),
+        origem: "CALCULADO",
+      },
+      update: {
+        categoriaId: categoria.id,
+        pontos: calcularPontosCompeticao(resultadosAtleta),
+        origem: "CALCULADO",
       },
     });
   } catch (error) {

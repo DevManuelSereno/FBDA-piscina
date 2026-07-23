@@ -10,6 +10,7 @@ import {
   GitBranch,
   Layers,
   LayoutDashboard,
+  PenLine,
   Tag,
   Trophy,
   Users,
@@ -39,6 +40,7 @@ const cadastroItems = [
 
 const operacaoItems = [
   { title: "Resultados", url: "/resultados", icon: ClipboardList },
+  { title: "Lançamento de Pontos", url: "/lancamento-pontos", icon: PenLine },
   { title: "Pontuação", url: "/pontuacao", icon: Calculator },
   { title: "Ranking", url: "/ranking", icon: Trophy },
 ];

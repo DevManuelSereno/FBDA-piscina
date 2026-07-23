@@ -21,7 +21,10 @@ export async function buscarRanking(filtros: FiltrosRankingQuery): Promise<{
   individual: RankingIndividualItem[];
   coletivo: RankingColetivoItem[];
 }> {
-  const where: Prisma.ResultadoWhereInput = { status: "VALIDO" };
+  // Fonte única do ranking: PontuacaoCompeticao (rollup por atleta x
+  // competição), preenchida tanto para competições COLOCACAO (derivada de
+  // Resultado) quanto MANUAL (digitada em /lancamento-pontos).
+  const where: Prisma.PontuacaoCompeticaoWhereInput = {};
 
   if (filtros.tipo === "provisorio" && filtros.competicaoId) {
     where.competicaoId = filtros.competicaoId;
@@ -48,17 +51,17 @@ export async function buscarRanking(filtros: FiltrosRankingQuery): Promise<{
     where.atleta = atletaWhere;
   }
 
-  const resultados = await prisma.resultado.findMany({
+  const pontuacoes = await prisma.pontuacaoCompeticao.findMany({
     where,
     include: { atleta: { include: { clube: true } } },
   });
 
-  const resultadosParaRanking = resultados.map((resultado) => ({
-    atletaId: resultado.atletaId,
-    atletaNome: resultado.atleta.nomeCompleto,
-    clubeId: resultado.atleta.clubeId,
-    clubeNome: resultado.atleta.clube.nome,
-    pontos: resultado.pontos,
+  const resultadosParaRanking = pontuacoes.map((pontuacao) => ({
+    atletaId: pontuacao.atletaId,
+    atletaNome: pontuacao.atleta.nomeCompleto,
+    clubeId: pontuacao.atleta.clubeId,
+    clubeNome: pontuacao.atleta.clube.nome,
+    pontos: pontuacao.pontos,
   }));
 
   return {

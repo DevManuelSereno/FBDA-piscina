@@ -10,6 +10,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function limparBanco() {
   // Ordem reversa de dependência — mantém o seed idempotente em dev.
+  await prisma.pontuacaoCompeticao.deleteMany();
   await prisma.resultado.deleteMany();
   await prisma.pontuacaoPosicao.deleteMany();
   await prisma.competicao.deleteMany();
