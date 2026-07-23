@@ -14,12 +14,11 @@ export default async function ResultadosPage({
 }) {
   const params = await searchParams;
 
-  const [circuitos, competicoes, provas] = await Promise.all([
+  const [circuitos, provas] = await Promise.all([
     prisma.circuito.findMany({
       where: { ativo: true },
       orderBy: { ordem: "asc" },
     }),
-    prisma.competicao.findMany({ orderBy: { data: "desc" } }),
     prisma.prova.findMany({
       orderBy: [{ distancia: "asc" }, { nome: "asc" }],
     }),
@@ -31,10 +30,22 @@ export default async function ResultadosPage({
   const competicaoId = params.competicaoId ?? "";
   const provaId = params.provaId ?? "";
 
+  // As competições ficam restritas ao circuito selecionado — só existe
+  // esse vínculo desde a Etapa 10, via TipoCompeticao.
+  const competicoes = circuitoId
+    ? await prisma.competicao.findMany({
+        where: { tipoCompeticao: { circuitoId } },
+        include: { tipoCompeticao: true },
+        orderBy: { data: "desc" },
+      })
+    : [];
+
+  const competicao = competicoes.find((c) => c.id === competicaoId);
+  const metodoPontuacao = competicao?.tipoCompeticao.metodoPontuacao ?? null;
+
   let linhas: LinhaResultado[] = [];
 
-  if (circuitoId && competicaoId && provaId) {
-    const competicao = competicoes.find((c) => c.id === competicaoId);
+  if (circuitoId && competicaoId && provaId && metodoPontuacao === "COLOCACAO") {
     const [atletas, categorias, resultados] = await Promise.all([
       prisma.atleta.findMany({
         where: { ativo: true },
@@ -92,20 +103,30 @@ export default async function ResultadosPage({
         circuitoIdAtual={circuitoId}
         competicaoIdAtual={competicaoId}
         provaIdAtual={provaId}
+        mostrarProva={metodoPontuacao === "COLOCACAO"}
       />
 
-      {circuitoId && competicaoId && provaId ? (
+      {!circuitoId || !competicaoId ? (
+        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+          Selecione um circuito e uma competição acima para começar o
+          lançamento.
+        </div>
+      ) : metodoPontuacao === "MANUAL" ? (
+        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+          Esta competição usa lançamento manual de pontuação (não por
+          colocação em prova). Essa tela chega na próxima etapa.
+        </div>
+      ) : !provaId ? (
+        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+          Selecione uma prova acima para começar o lançamento.
+        </div>
+      ) : (
         <ResultadosGrid
           linhas={linhas}
           provaId={provaId}
           competicaoId={competicaoId}
           circuitoId={circuitoId}
         />
-      ) : (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
-          Selecione um circuito, uma competição e uma prova acima para
-          começar o lançamento.
-        </div>
       )}
     </div>
   );

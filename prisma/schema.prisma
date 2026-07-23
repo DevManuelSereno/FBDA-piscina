@@ -42,9 +42,40 @@ model Circuito {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  categorias Categoria[]
+  categorias      Categoria[]
+  tiposCompeticao TipoCompeticao[]
 
   @@unique([nome])
+}
+
+// TipoCompeticao: o "tipo/nível" de uma competição dentro de um circuito
+// (ex.: Concurso, Regional, Brasileiro de Categorias, Brasileiro Absoluto,
+// Fita Azul — nomes reais dos grupos vistos nas planilhas do cliente).
+// Determina se o lançamento é por colocação (grid de provas) ou manual
+// (pontos digitados direto por competição — ver Etapa 11).
+model TipoCompeticao {
+  id              String @id @default(cuid())
+  nome            String
+  metodoPontuacao String // "COLOCACAO" | "MANUAL"
+  // Rótulo de agrupamento para o relatório matriz (Etapa 12), ex.:
+  // "CONCURSO", "CAMPEONATO", "REGIONAL", "BRASILEIRO_CATEGORIAS",
+  // "BRASILEIRO_ABSOLUTO", "FITA_AZUL".
+  grupoRelatorio  String
+  ordem           Int    @default(0)
+
+  circuitoId String
+  circuito   Circuito @relation(fields: [circuitoId], references: [id])
+
+  // Só relevante quando metodoPontuacao = COLOCACAO.
+  regraPontuacaoId String?
+  regraPontuacao   RegraPontuacao? @relation(fields: [regraPontuacaoId], references: [id])
+
+  competicoes Competicao[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([circuitoId, nome])
 }
 
 model Categoria {
@@ -114,10 +145,15 @@ model Competicao {
   local     String?
   temporada String?
 
+  tipoCompeticaoId String
+  tipoCompeticao   TipoCompeticao @relation(fields: [tipoCompeticaoId], references: [id])
+
   resultados Resultado[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tipoCompeticaoId])
 }
 
 model Resultado {
@@ -156,7 +192,8 @@ model RegraPontuacao {
   tipo  String // COLOCACAO | FINA
   ativo Boolean @default(false)
 
-  posicoes PontuacaoPosicao[]
+  posicoes        PontuacaoPosicao[]
+  tiposCompeticao TipoCompeticao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

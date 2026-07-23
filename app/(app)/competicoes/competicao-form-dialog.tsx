@@ -5,6 +5,7 @@ import { Loader2, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +27,15 @@ type Competicao = {
   data: Date;
   local: string | null;
   temporada: string | null;
+  tipoCompeticaoId: string;
 };
 
-type CompeticaoFormDialogProps =
+type CompeticaoFormDialogProps = (
   | { mode: "create" }
-  | { mode: "edit"; competicao: Competicao };
+  | { mode: "edit"; competicao: Competicao }
+) & {
+  tipos: { id: string; nome: string; circuitoNome: string }[];
+};
 
 const initialState: ActionResult = {};
 
@@ -77,6 +82,24 @@ export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
             </DialogTitle>
           </DialogHeader>
           <form action={formAction} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="tipoCompeticaoId">Tipo de competição</Label>
+              <NativeSelect
+                id="tipoCompeticaoId"
+                name="tipoCompeticaoId"
+                defaultValue={competicao?.tipoCompeticaoId ?? ""}
+                required
+              >
+                <option value="" disabled>
+                  Selecione um tipo
+                </option>
+                {props.tipos.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.circuitoNome} — {tipo.nome}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="nome">Nome</Label>
               <Input

@@ -10,11 +10,12 @@ const prisma = new PrismaClient({ adapter });
 
 async function limparBanco() {
   // Ordem reversa de dependência — mantém o seed idempotente em dev.
-  await prisma.pontuacaoPosicao.deleteMany();
-  await prisma.regraPontuacao.deleteMany();
   await prisma.resultado.deleteMany();
-  await prisma.atleta.deleteMany();
+  await prisma.pontuacaoPosicao.deleteMany();
   await prisma.competicao.deleteMany();
+  await prisma.tipoCompeticao.deleteMany();
+  await prisma.regraPontuacao.deleteMany();
+  await prisma.atleta.deleteMany();
   await prisma.prova.deleteMany();
   await prisma.categoria.deleteMany();
   await prisma.circuito.deleteMany();
@@ -143,14 +144,128 @@ async function main() {
     ].map((p) => prisma.prova.create({ data: p })),
   );
 
-  await prisma.competicao.create({
+  // Regra de pontuação padrão por colocação (1º ao 8º lugar) — usada pelos
+  // tipos de competição COLOCACAO (Concurso) de ambos os circuitos.
+  const regraColocacaoPadrao = await prisma.regraPontuacao.create({
     data: {
-      nome: "1ª Etapa Estadual 2026",
-      data: new Date("2026-03-15"),
-      local: "Piscina Municipal - Salvador",
-      temporada: "2026",
+      nome: "Colocação Padrão (1º-8º)",
+      tipo: "COLOCACAO",
+      ativo: true,
+      posicoes: {
+        create: [9, 7, 6, 5, 4, 3, 2, 1].map((pontos, index) => ({
+          posicao: index + 1,
+          pontos,
+        })),
+      },
     },
   });
+
+  // Tipos de competição: os NOMES e agrupamentos vêm das planilhas reais
+  // (cabeçalhos "CONCURSOS", "CAMPEONATOS", "REGIONAIS - INFANTIL A
+  // SÊNIOR", "Brasileiro de Categorias", "BRASILEIRO ABSOLUTO" no circuito
+  // Infantil a Sênior; "CONCURSOS", "FITA AZUL", "CAMPEONATOS" no Master).
+  // Só "Concurso" pontua por colocação — os demais o cliente pontua
+  // manualmente hoje (ver extras/extra-info.md), então ficam MANUAL até
+  // sabermos a fórmula oficial de cálculo por tempo (Etapa 13).
+  const [tipoConcursoJovem, tipoCampeonatoJovem] = await Promise.all([
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Concurso",
+        circuitoId: circuitoJovem.id,
+        metodoPontuacao: "COLOCACAO",
+        grupoRelatorio: "CONCURSO",
+        ordem: 1,
+        regraPontuacaoId: regraColocacaoPadrao.id,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Campeonato",
+        circuitoId: circuitoJovem.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "CAMPEONATO",
+        ordem: 2,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Regional",
+        circuitoId: circuitoJovem.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "REGIONAL",
+        ordem: 3,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Brasileiro de Categorias",
+        circuitoId: circuitoJovem.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "BRASILEIRO_CATEGORIAS",
+        ordem: 4,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Brasileiro Absoluto",
+        circuitoId: circuitoJovem.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "BRASILEIRO_ABSOLUTO",
+        ordem: 5,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Concurso",
+        circuitoId: circuitoMaster.id,
+        metodoPontuacao: "COLOCACAO",
+        grupoRelatorio: "CONCURSO",
+        ordem: 1,
+        regraPontuacaoId: regraColocacaoPadrao.id,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Fita Azul",
+        circuitoId: circuitoMaster.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "FITA_AZUL",
+        ordem: 2,
+      },
+    }),
+    prisma.tipoCompeticao.create({
+      data: {
+        nome: "Campeonato",
+        circuitoId: circuitoMaster.id,
+        metodoPontuacao: "MANUAL",
+        grupoRelatorio: "CAMPEONATO",
+        ordem: 3,
+      },
+    }),
+  ]);
+
+  await Promise.all([
+    prisma.competicao.create({
+      data: {
+        nome: "1ª Etapa Estadual 2026",
+        data: new Date("2026-03-15"),
+        local: "Piscina Municipal - Salvador",
+        temporada: "2026",
+        tipoCompeticaoId: tipoConcursoJovem.id,
+      },
+    }),
+    // Exemplo de competição MANUAL — sem grid de provas; lançamento de
+    // pontos direto chega na Etapa 11.
+    prisma.competicao.create({
+      data: {
+        nome: "Campeonato Outono 2026",
+        data: new Date("2026-04-25"),
+        local: "Salvador",
+        temporada: "2026",
+        tipoCompeticaoId: tipoCampeonatoJovem.id,
+      },
+    }),
+  ]);
 
   await Promise.all([
     prisma.atleta.create({
@@ -204,21 +319,6 @@ async function main() {
       },
     }),
   ]);
-
-  // Regra de pontuação padrão por colocação (1º ao 8º lugar).
-  await prisma.regraPontuacao.create({
-    data: {
-      nome: "Colocação Padrão (1º-8º)",
-      tipo: "COLOCACAO",
-      ativo: true,
-      posicoes: {
-        create: [9, 7, 6, 5, 4, 3, 2, 1].map((pontos, index) => ({
-          posicao: index + 1,
-          pontos,
-        })),
-      },
-    },
-  });
 
   const senhaHash = await bcrypt.hash("piscina123", 10);
   await prisma.usuario.create({

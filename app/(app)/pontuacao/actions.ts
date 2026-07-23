@@ -93,25 +93,27 @@ export async function recalcularRanking(): Promise<
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const regraAtiva = await prisma.regraPontuacao.findFirst({
-    where: { ativo: true },
-    include: { posicoes: true },
-  });
-  if (!regraAtiva) {
-    return { error: "Nenhuma regra de pontuação está ativa." };
-  }
-
+  // Cada resultado usa a regra do TipoCompeticao da própria competição
+  // (não mais uma única regra "ativa" global) — mesma resolução usada em
+  // salvarResultado (app/(app)/resultados/actions.ts).
   const resultados = await prisma.resultado.findMany({
     where: { status: "VALIDO" },
+    include: {
+      competicao: {
+        include: { tipoCompeticao: { include: { regraPontuacao: { include: { posicoes: true } } } } },
+      },
+    },
   });
 
   await prisma.$transaction(
-    resultados.map((resultado) =>
-      prisma.resultado.update({
+    resultados.map((resultado) => {
+      const regra = resultado.competicao.tipoCompeticao.regraPontuacao;
+      const pontos = regra ? calcularPontos(resultado.colocacao, regra.posicoes) : 0;
+      return prisma.resultado.update({
         where: { id: resultado.id },
-        data: { pontos: calcularPontos(resultado.colocacao, regraAtiva.posicoes) },
-      }),
-    ),
+        data: { pontos },
+      });
+    }),
   );
 
   revalidatePath("/resultados");

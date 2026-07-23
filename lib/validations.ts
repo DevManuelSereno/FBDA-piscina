@@ -36,6 +36,28 @@ export const categoriaSchema = z
   });
 export type CategoriaInput = z.infer<typeof categoriaSchema>;
 
+export const METODO_PONTUACAO = ["COLOCACAO", "MANUAL"] as const;
+export const tipoCompeticaoSchema = z
+  .object({
+    nome: z.string().trim().min(2, "Informe o nome do tipo de competição."),
+    circuitoId: z.string().min(1, "Selecione um circuito."),
+    metodoPontuacao: z.enum(METODO_PONTUACAO),
+    grupoRelatorio: z.string().trim().min(2, "Informe o grupo do relatório."),
+    ordem: z.coerce.number("Ordem inválida.").int().default(0),
+    regraPontuacaoId: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+  })
+  .refine(
+    (data) => data.metodoPontuacao !== "COLOCACAO" || !!data.regraPontuacaoId,
+    {
+      message: "Selecione a regra de pontuação para o método por colocação.",
+      path: ["regraPontuacaoId"],
+    },
+  );
+export type TipoCompeticaoInput = z.infer<typeof tipoCompeticaoSchema>;
+
 export const ESTILO_PROVA = [
   "LIVRE",
   "COSTAS",
@@ -78,5 +100,6 @@ export const competicaoSchema = z.object({
   data: z.coerce.date("Data inválida."),
   local: z.string().trim().optional().or(z.literal("")),
   temporada: z.string().trim().optional().or(z.literal("")),
+  tipoCompeticaoId: z.string().min(1, "Selecione o tipo de competição."),
 });
 export type CompeticaoInput = z.infer<typeof competicaoSchema>;

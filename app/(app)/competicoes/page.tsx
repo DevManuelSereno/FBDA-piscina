@@ -1,12 +1,36 @@
 import { prisma } from "@/lib/db";
-import { DataTable } from "@/components/data-table";
 import { CompeticaoFormDialog } from "./competicao-form-dialog";
-import { columns } from "./columns";
+import { CompeticoesTable } from "./competicoes-table";
+import type { CompeticaoRow } from "./columns";
 
 export default async function CompeticoesPage() {
-  const competicoes = await prisma.competicao.findMany({
-    orderBy: { data: "desc" },
-  });
+  const [competicoes, tiposRaw] = await Promise.all([
+    prisma.competicao.findMany({
+      include: { tipoCompeticao: { include: { circuito: true } } },
+      orderBy: { data: "desc" },
+    }),
+    prisma.tipoCompeticao.findMany({
+      include: { circuito: true },
+      orderBy: [{ circuito: { ordem: "asc" } }, { ordem: "asc" }],
+    }),
+  ]);
+
+  const tipos = tiposRaw.map((t) => ({
+    id: t.id,
+    nome: t.nome,
+    circuitoNome: t.circuito.nome,
+  }));
+
+  const rows: CompeticaoRow[] = competicoes.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+    data: c.data,
+    local: c.local,
+    temporada: c.temporada,
+    tipoCompeticaoId: c.tipoCompeticaoId,
+    tipoNome: c.tipoCompeticao.nome,
+    circuitoNome: c.tipoCompeticao.circuito.nome,
+  }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,14 +41,10 @@ export default async function CompeticoesPage() {
             Etapas e eventos onde os resultados são lançados.
           </p>
         </div>
-        <CompeticaoFormDialog mode="create" />
+        <CompeticaoFormDialog mode="create" tipos={tipos} />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={competicoes}
-        searchPlaceholder="Buscar competição..."
-      />
+      <CompeticoesTable rows={rows} tipos={tipos} />
     </div>
   );
 }

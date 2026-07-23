@@ -13,6 +13,7 @@ function parseCompeticaoForm(formData: FormData) {
     data: formData.get("data"),
     local: formData.get("local"),
     temporada: formData.get("temporada"),
+    tipoCompeticaoId: formData.get("tipoCompeticaoId"),
   });
 }
 

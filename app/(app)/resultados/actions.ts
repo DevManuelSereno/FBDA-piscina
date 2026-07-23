@@ -45,12 +45,22 @@ export async function salvarResultado(
 
   const [atleta, competicao, categorias] = await Promise.all([
     prisma.atleta.findUnique({ where: { id: input.atletaId } }),
-    prisma.competicao.findUnique({ where: { id: input.competicaoId } }),
+    prisma.competicao.findUnique({
+      where: { id: input.competicaoId },
+      include: { tipoCompeticao: { include: { regraPontuacao: { include: { posicoes: true } } } } },
+    }),
     prisma.categoria.findMany(),
   ]);
 
   if (!atleta || !competicao) {
     return { error: "Atleta ou competição não encontrados." };
+  }
+
+  if (competicao.tipoCompeticao.metodoPontuacao !== "COLOCACAO") {
+    return {
+      error:
+        "Esta competição usa lançamento manual de pontuação, não por colocação.",
+    };
   }
 
   const categoria = inferirCategoria(
@@ -67,12 +77,9 @@ export async function salvarResultado(
 
   let pontos = 0;
   if (parsed.status === "VALIDO" && parsed.colocacao !== null) {
-    const regraAtiva = await prisma.regraPontuacao.findFirst({
-      where: { ativo: true },
-      include: { posicoes: true },
-    });
-    if (regraAtiva) {
-      pontos = calcularPontos(parsed.colocacao, regraAtiva.posicoes);
+    const regra = competicao.tipoCompeticao.regraPontuacao;
+    if (regra) {
+      pontos = calcularPontos(parsed.colocacao, regra.posicoes);
     }
   }
 

@@ -10,6 +10,7 @@ import {
   GitBranch,
   Layers,
   LayoutDashboard,
+  Tag,
   Trophy,
   Users,
   Waves,
@@ -32,6 +33,7 @@ const cadastroItems = [
   { title: "Categorias", url: "/categorias", icon: Layers },
   { title: "Provas", url: "/provas", icon: Waves },
   { title: "Atletas", url: "/atletas", icon: Users },
+  { title: "Tipos de Competição", url: "/tipos-competicao", icon: Tag },
   { title: "Competições", url: "/competicoes", icon: CalendarDays },
 ];
 
