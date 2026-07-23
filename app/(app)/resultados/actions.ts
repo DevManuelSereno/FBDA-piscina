@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { parseResultadoInput, type ResultadoStatus } from "@/lib/resultado";
+import { calcularPontos } from "@/lib/scoring";
 
 export type SalvarResultadoInput = {
   atletaId: string;
@@ -29,6 +30,17 @@ export async function salvarResultado(
     return { error: parsed.error };
   }
 
+  let pontos = 0;
+  if (parsed.status === "VALIDO" && parsed.colocacao !== null) {
+    const regraAtiva = await prisma.regraPontuacao.findFirst({
+      where: { ativo: true },
+      include: { posicoes: true },
+    });
+    if (regraAtiva) {
+      pontos = calcularPontos(parsed.colocacao, regraAtiva.posicoes);
+    }
+  }
+
   await prisma.resultado.upsert({
     where: {
       atletaId_provaId_competicaoId: {
@@ -45,11 +57,13 @@ export async function salvarResultado(
       status: parsed.status,
       tempoCentesimos: parsed.tempoCentesimos,
       colocacao: parsed.colocacao,
+      pontos,
     },
     update: {
       status: parsed.status,
       tempoCentesimos: parsed.tempoCentesimos,
       colocacao: parsed.colocacao,
+      pontos,
     },
   });
 
