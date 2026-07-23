@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
-import { agregarRankingColetivo, agregarRankingIndividual } from "@/lib/ranking";
-import type { Prisma } from "@/lib/generated/prisma/client";
+import { buscarRanking } from "@/lib/ranking-query";
 import { FiltrosRanking, type FiltrosRankingValores } from "./filtros";
 import { RankingIndividualTable } from "./ranking-individual-table";
 import { RankingColetivoTable } from "./ranking-coletivo-table";
+import { ExportarPdfButtons } from "./exportar-pdf-buttons";
 
 export default async function RankingPage({
   searchParams,
@@ -34,52 +34,20 @@ export default async function RankingPage({
     .map((t) => t.temporada)
     .filter((t): t is string => !!t);
 
-  const where: Prisma.ResultadoWhereInput = { status: "VALIDO" };
-
-  if (valores.tipo === "provisorio" && valores.competicaoId) {
-    where.competicaoId = valores.competicaoId;
-  }
-  if (valores.tipo === "completo" && valores.temporada) {
-    where.competicao = { temporada: valores.temporada };
-  }
-  if (valores.categoriaId) {
-    where.categoriaId = valores.categoriaId;
-  }
-  const atletaWhere: Prisma.AtletaWhereInput = {};
-  if (valores.clubeId) {
-    atletaWhere.clubeId = valores.clubeId;
-  }
-  if (valores.sexo) {
-    atletaWhere.sexo = valores.sexo;
-  }
-  if (Object.keys(atletaWhere).length > 0) {
-    where.atleta = atletaWhere;
-  }
-
-  const resultados = await prisma.resultado.findMany({
-    where,
-    include: { atleta: { include: { clube: true } } },
-  });
-
-  const resultadosParaRanking = resultados.map((resultado) => ({
-    atletaId: resultado.atletaId,
-    atletaNome: resultado.atleta.nomeCompleto,
-    clubeId: resultado.atleta.clubeId,
-    clubeNome: resultado.atleta.clube.nome,
-    pontos: resultado.pontos,
-  }));
-
-  const rankingIndividual = agregarRankingIndividual(resultadosParaRanking);
-  const rankingColetivo = agregarRankingColetivo(resultadosParaRanking);
+  const { individual: rankingIndividual, coletivo: rankingColetivo } =
+    await buscarRanking(valores);
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Ranking</h1>
-        <p className="text-muted-foreground">
-          Classificação individual e coletiva com base nos resultados
-          lançados.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Ranking</h1>
+          <p className="text-muted-foreground">
+            Classificação individual e coletiva com base nos resultados
+            lançados.
+          </p>
+        </div>
+        <ExportarPdfButtons valores={valores} />
       </div>
 
       <FiltrosRanking
