@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { calcularPontos, validarPosicoes, type PosicaoPontos } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth-guard";
 import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 export async function createRegra(
   _prevState: ActionResult,
@@ -29,7 +28,7 @@ export async function createRegra(
   });
 
   revalidatePath("/pontuacao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Regra criada com sucesso." };
 }
 
 export async function ativarRegra(id: string): Promise<ActionResult> {
@@ -42,7 +41,7 @@ export async function ativarRegra(id: string): Promise<ActionResult> {
   ]);
 
   revalidatePath("/pontuacao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Regra ativada com sucesso." };
 }
 
 export async function deleteRegra(id: string): Promise<ActionResult> {
@@ -58,7 +57,7 @@ export async function deleteRegra(id: string): Promise<ActionResult> {
 
   await prisma.regraPontuacao.delete({ where: { id } });
   revalidatePath("/pontuacao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Regra excluída com sucesso." };
 }
 
 export async function salvarPosicoes(
@@ -85,7 +84,7 @@ export async function salvarPosicoes(
   ]);
 
   revalidatePath("/pontuacao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Posições salvas com sucesso." };
 }
 
 export async function recalcularRanking(): Promise<

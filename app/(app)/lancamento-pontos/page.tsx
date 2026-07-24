@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { inferirCategoria } from "@/lib/categoria";
+import { EmptyState } from "@/components/empty-state";
 import { SeletorCircuitoCompeticao } from "./seletor";
 import { LancamentoGrid, type LinhaLancamento } from "./lancamento-grid";
 
@@ -91,15 +92,15 @@ export default async function LancamentoPontosPage({
       />
 
       {!circuitoId || !competicaoId ? (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+        <EmptyState>
           Selecione um circuito e uma competição acima para começar o
           lançamento.
-        </div>
+        </EmptyState>
       ) : !competicao ? (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+        <EmptyState>
           Nenhuma competição de pontuação manual encontrada para esse
           circuito.
-        </div>
+        </EmptyState>
       ) : (
         <LancamentoGrid
           linhas={linhas}

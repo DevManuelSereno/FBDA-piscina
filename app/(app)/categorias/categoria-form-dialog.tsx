@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
 import { SEXO_CATEGORIA } from "@/lib/validations";
-import { createCategoria, updateCategoria, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createCategoria, updateCategoria } from "./actions";
 
 type Categoria = {
   id: string;

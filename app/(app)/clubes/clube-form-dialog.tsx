@@ -14,7 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { createClube, updateClube, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createClube, updateClube } from "./actions";
 
 type ClubeFormDialogProps =
   | { mode: "create" }

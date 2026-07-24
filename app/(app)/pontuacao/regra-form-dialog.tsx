@@ -15,7 +15,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { createRegra, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createRegra } from "./actions";
 
 const initialState: ActionResult = {};
 

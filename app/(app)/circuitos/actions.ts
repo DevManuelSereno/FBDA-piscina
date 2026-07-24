@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { circuitoSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseCircuitoForm(formData: FormData) {
   return circuitoSchema.safeParse({
@@ -39,7 +38,7 @@ export async function createCircuito(
   }
 
   revalidatePath("/circuitos");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Circuito criado com sucesso." };
 }
 
 export async function updateCircuito(
@@ -66,7 +65,7 @@ export async function updateCircuito(
   }
 
   revalidatePath("/circuitos");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Circuito atualizado com sucesso." };
 }
 
 export async function deleteCircuito(id: string): Promise<ActionResult> {
@@ -83,5 +82,5 @@ export async function deleteCircuito(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/circuitos");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Circuito excluído com sucesso." };
 }

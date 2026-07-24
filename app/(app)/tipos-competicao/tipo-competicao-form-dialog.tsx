@@ -16,11 +16,9 @@ import {
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
 import { METODO_PONTUACAO } from "@/lib/validations";
-import {
-  createTipoCompeticao,
-  updateTipoCompeticao,
-  type ActionResult,
-} from "./actions";
+import { GRUPOS_RELATORIO } from "@/lib/relatorio-matriz";
+import type { ActionResult } from "@/lib/action-result";
+import { createTipoCompeticao, updateTipoCompeticao } from "./actions";
 
 type TipoCompeticao = {
   id: string;
@@ -163,14 +161,21 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
             )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="grupoRelatorio">Grupo no relatório</Label>
-              <Input
+              <NativeSelect
                 id="grupoRelatorio"
                 name="grupoRelatorio"
-                placeholder="Ex.: CONCURSO, CAMPEONATO, REGIONAL"
-                defaultValue={tipo?.grupoRelatorio}
+                defaultValue={tipo?.grupoRelatorio ?? ""}
                 required
-                minLength={2}
-              />
+              >
+                <option value="" disabled>
+                  Selecione um grupo
+                </option>
+                {GRUPOS_RELATORIO.map((grupo) => (
+                  <option key={grupo.value} value={grupo.value}>
+                    {grupo.label}
+                  </option>
+                ))}
+              </NativeSelect>
             </div>
 
             {state.error && (

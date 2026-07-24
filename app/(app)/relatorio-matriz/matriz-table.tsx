@@ -1,19 +1,7 @@
 import { Fragment } from "react";
 import type { ColunaMatriz } from "@/lib/relatorio-matriz-query";
-import type { MatrizLinha } from "@/lib/relatorio-matriz";
-
-const LABEL_GRUPO: Record<string, string> = {
-  CONCURSO: "Concursos",
-  CAMPEONATO: "Campeonatos",
-  REGIONAL: "Regionais",
-  BRASILEIRO_CATEGORIAS: "Brasileiro de Categorias",
-  BRASILEIRO_ABSOLUTO: "Brasileiro Absoluto",
-  FITA_AZUL: "Fita Azul",
-};
-
-function labelGrupo(grupo: string) {
-  return LABEL_GRUPO[grupo] ?? grupo;
-}
+import { labelGrupo, type MatrizLinha } from "@/lib/relatorio-matriz";
+import { EmptyState } from "@/components/empty-state";
 
 export function MatrizTable({
   colunas,
@@ -26,9 +14,9 @@ export function MatrizTable({
 }) {
   if (linhas.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+      <EmptyState>
         Nenhum resultado encontrado para os filtros selecionados.
-      </div>
+      </EmptyState>
     );
   }
 

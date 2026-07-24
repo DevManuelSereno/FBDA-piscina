@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { atletaSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseAtletaForm(formData: FormData) {
   return atletaSchema.safeParse({
@@ -32,7 +31,7 @@ export async function createAtleta(
 
   await prisma.atleta.create({ data: parsed.data });
   revalidatePath("/atletas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Atleta criado com sucesso." };
 }
 
 export async function updateAtleta(
@@ -50,7 +49,7 @@ export async function updateAtleta(
 
   await prisma.atleta.update({ where: { id }, data: parsed.data });
   revalidatePath("/atletas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Atleta atualizado com sucesso." };
 }
 
 export async function deleteAtleta(id: string): Promise<ActionResult> {
@@ -67,5 +66,5 @@ export async function deleteAtleta(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/atletas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Atleta excluído com sucesso." };
 }

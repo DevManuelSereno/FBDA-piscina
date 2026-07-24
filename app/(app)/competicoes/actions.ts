@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { competicaoSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseCompeticaoForm(formData: FormData) {
   return competicaoSchema.safeParse({
@@ -31,7 +30,7 @@ export async function createCompeticao(
 
   await prisma.competicao.create({ data: parsed.data });
   revalidatePath("/competicoes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Competição criada com sucesso." };
 }
 
 export async function updateCompeticao(
@@ -49,7 +48,7 @@ export async function updateCompeticao(
 
   await prisma.competicao.update({ where: { id }, data: parsed.data });
   revalidatePath("/competicoes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Competição atualizada com sucesso." };
 }
 
 export async function deleteCompeticao(id: string): Promise<ActionResult> {
@@ -66,5 +65,5 @@ export async function deleteCompeticao(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/competicoes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Competição excluída com sucesso." };
 }

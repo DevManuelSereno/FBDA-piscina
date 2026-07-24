@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
 import { ESTILO_PROVA, PISCINA } from "@/lib/validations";
-import { createProva, updateProva, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createProva, updateProva } from "./actions";
 
 type Prova = {
   id: string;

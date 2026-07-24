@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { categoriaSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseCategoriaForm(formData: FormData) {
   return categoriaSchema.safeParse({
@@ -43,7 +42,7 @@ export async function createCategoria(
   }
 
   revalidatePath("/categorias");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Categoria criada com sucesso." };
 }
 
 export async function updateCategoria(
@@ -70,7 +69,7 @@ export async function updateCategoria(
   }
 
   revalidatePath("/categorias");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Categoria atualizada com sucesso." };
 }
 
 export async function deleteCategoria(id: string): Promise<ActionResult> {
@@ -87,5 +86,5 @@ export async function deleteCategoria(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/categorias");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Categoria excluída com sucesso." };
 }

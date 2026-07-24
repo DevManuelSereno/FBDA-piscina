@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -27,6 +28,7 @@ export default async function AppLayout({
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex-1" />
+          <ThemeToggle />
           <UserMenu name={session.user.name} papel={session.user.papel} />
         </header>
         <main className="flex-1 p-6">{children}</main>

@@ -4,6 +4,31 @@ export type CompeticaoMatriz = {
   grupoRelatorio: string;
 };
 
+// Fonte única dos grupos de relatório válidos — usada pelo select do
+// formulário de TipoCompeticao (evita texto livre digitado errado
+// fragmentar o agrupamento do relatório) e pela exibição do rótulo
+// legível na tela e no PDF.
+export const GRUPOS_RELATORIO = [
+  { value: "CONCURSO", label: "Concursos" },
+  { value: "CAMPEONATO", label: "Campeonatos" },
+  { value: "REGIONAL", label: "Regionais" },
+  { value: "BRASILEIRO_CATEGORIAS", label: "Brasileiro de Categorias" },
+  { value: "BRASILEIRO_ABSOLUTO", label: "Brasileiro Absoluto" },
+  { value: "FITA_AZUL", label: "Fita Azul" },
+] as const;
+
+const LABEL_GRUPO: Record<string, string> = Object.fromEntries(
+  GRUPOS_RELATORIO.map((g) => [g.value, g.label]),
+);
+
+export const GRUPOS_RELATORIO_VALORES = GRUPOS_RELATORIO.map(
+  (g) => g.value,
+) as [string, ...string[]];
+
+export function labelGrupo(grupo: string): string {
+  return LABEL_GRUPO[grupo] ?? grupo;
+}
+
 export type PontuacaoParaMatriz = {
   atletaId: string;
   atletaNome: string;

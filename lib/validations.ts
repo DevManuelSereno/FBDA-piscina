@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GRUPOS_RELATORIO_VALORES } from "./relatorio-matriz";
 
 export const clubeSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome do clube."),
@@ -42,7 +43,9 @@ export const tipoCompeticaoSchema = z
     nome: z.string().trim().min(2, "Informe o nome do tipo de competição."),
     circuitoId: z.string().min(1, "Selecione um circuito."),
     metodoPontuacao: z.enum(METODO_PONTUACAO),
-    grupoRelatorio: z.string().trim().min(2, "Informe o grupo do relatório."),
+    grupoRelatorio: z.enum(GRUPOS_RELATORIO_VALORES, {
+      error: "Selecione um grupo do relatório.",
+    }),
     ordem: z.coerce.number("Ordem inválida.").int().default(0),
     regraPontuacaoId: z
       .string()

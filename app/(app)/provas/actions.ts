@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { provaSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseProvaForm(formData: FormData) {
   return provaSchema.safeParse({
@@ -40,7 +39,7 @@ export async function createProva(
   }
 
   revalidatePath("/provas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Prova criada com sucesso." };
 }
 
 export async function updateProva(
@@ -67,7 +66,7 @@ export async function updateProva(
   }
 
   revalidatePath("/provas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Prova atualizada com sucesso." };
 }
 
 export async function deleteProva(id: string): Promise<ActionResult> {
@@ -84,5 +83,5 @@ export async function deleteProva(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/provas");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Prova excluída com sucesso." };
 }

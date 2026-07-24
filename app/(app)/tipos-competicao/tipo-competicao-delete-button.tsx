@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -34,6 +35,7 @@ export function TipoCompeticaoDeleteButton({
         setError(result.error);
       } else {
         setOpen(false);
+        toast.success(result.mensagemSucesso ?? "Excluído com sucesso.");
       }
     });
   }

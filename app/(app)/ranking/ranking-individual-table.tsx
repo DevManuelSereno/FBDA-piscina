@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { RankingIndividualItem } from "@/lib/ranking";
+import { EmptyState } from "@/components/empty-state";
 import { PodioBadge } from "./podio-badge";
 
 export function RankingIndividualTable({
@@ -16,9 +17,9 @@ export function RankingIndividualTable({
 }) {
   if (itens.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+      <EmptyState>
         Nenhum resultado encontrado para os filtros selecionados.
-      </div>
+      </EmptyState>
     );
   }
 

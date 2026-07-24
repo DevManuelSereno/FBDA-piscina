@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
 import { SEXO_ATLETA } from "@/lib/validations";
-import { createAtleta, updateAtleta, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createAtleta, updateAtleta } from "./actions";
 
 type Atleta = {
   id: string;

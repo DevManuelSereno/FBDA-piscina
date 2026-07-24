@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -31,7 +32,12 @@ export function RegraRowActions({
 
   function ativar() {
     startAtivar(async () => {
-      await ativarRegra(id);
+      const resultado = await ativarRegra(id);
+      if (resultado.error) {
+        toast.error(resultado.error);
+      } else {
+        toast.success(resultado.mensagemSucesso ?? "Regra ativada com sucesso.");
+      }
     });
   }
 
@@ -43,6 +49,7 @@ export function RegraRowActions({
         setError(resultado.error);
       } else {
         setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Excluído com sucesso.");
       }
     });
   }

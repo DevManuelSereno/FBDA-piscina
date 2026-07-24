@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2, ListOrdered, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +63,7 @@ export function PosicoesEditorDialog({
         setError(resultado.error);
       } else {
         setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
       }
     });
   }

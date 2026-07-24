@@ -15,11 +15,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import {
-  createCompeticao,
-  updateCompeticao,
-  type ActionResult,
-} from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createCompeticao, updateCompeticao } from "./actions";
 
 type Competicao = {
   id: string;

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-type ActionResult = { success?: boolean };
+type ActionResult = { success?: boolean; mensagemSucesso?: string };
 
 // Fecha um Dialog/AlertDialog quando uma Server Action (via useActionState)
 // retorna sucesso. Usa o padrão "ajustar estado durante a renderização" em
@@ -17,4 +18,14 @@ export function useCloseOnSuccess<T extends ActionResult>(
       setOpen(false);
     }
   }
+
+  // O toast é um efeito colateral de verdade (mexe numa store externa ao
+  // React), então mora num useEffect de verdade — só dispara quando a
+  // referência de `state` muda (uma nova conclusão da Server Action), não
+  // a cada re-render.
+  useEffect(() => {
+    if (state.success) {
+      toast.success(state.mensagemSucesso ?? "Salvo com sucesso.");
+    }
+  }, [state]);
 }

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Document, Font, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ColunaMatriz } from "@/lib/relatorio-matriz-query";
-import type { MatrizLinha } from "@/lib/relatorio-matriz";
+import { labelGrupo, type MatrizLinha } from "@/lib/relatorio-matriz";
 
 Font.register({
   family: "Rubik",
@@ -16,19 +16,6 @@ const CORES = {
   cinzaFundo: "#F3F4F6",
   branco: "#FFFFFF",
 };
-
-const LABEL_GRUPO: Record<string, string> = {
-  CONCURSO: "Concursos",
-  CAMPEONATO: "Campeonatos",
-  REGIONAL: "Regionais",
-  BRASILEIRO_CATEGORIAS: "Brasileiro de Categorias",
-  BRASILEIRO_ABSOLUTO: "Brasileiro Absoluto",
-  FITA_AZUL: "Fita Azul",
-};
-
-function labelGrupo(grupo: string) {
-  return LABEL_GRUPO[grupo] ?? grupo;
-}
 
 const styles = StyleSheet.create({
   page: {

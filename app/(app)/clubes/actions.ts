@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { clubeSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseClubeForm(formData: FormData) {
   return clubeSchema.safeParse({
@@ -39,7 +38,7 @@ export async function createClube(
   }
 
   revalidatePath("/clubes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Clube criado com sucesso." };
 }
 
 export async function updateClube(
@@ -66,7 +65,7 @@ export async function updateClube(
   }
 
   revalidatePath("/clubes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Clube atualizado com sucesso." };
 }
 
 export async function deleteClube(id: string): Promise<ActionResult> {
@@ -83,5 +82,5 @@ export async function deleteClube(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/clubes");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Clube excluído com sucesso." };
 }

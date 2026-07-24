@@ -14,7 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { createCircuito, updateCircuito, type ActionResult } from "./actions";
+import type { ActionResult } from "@/lib/action-result";
+import { createCircuito, updateCircuito } from "./actions";
 
 type Circuito = {
   id: string;

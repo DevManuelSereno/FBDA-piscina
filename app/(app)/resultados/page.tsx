@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { inferirCategoria } from "@/lib/categoria";
+import { EmptyState } from "@/components/empty-state";
 import { SeletorCompeticaoProva } from "./seletor";
 import { ResultadosGrid, type LinhaResultado } from "./resultados-grid";
 
@@ -107,19 +108,17 @@ export default async function ResultadosPage({
       />
 
       {!circuitoId || !competicaoId ? (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+        <EmptyState>
           Selecione um circuito e uma competição acima para começar o
           lançamento.
-        </div>
+        </EmptyState>
       ) : metodoPontuacao === "MANUAL" ? (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
+        <EmptyState>
           Esta competição usa lançamento manual de pontuação (não por
           colocação em prova). Essa tela chega na próxima etapa.
-        </div>
+        </EmptyState>
       ) : !provaId ? (
-        <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground">
-          Selecione uma prova acima para começar o lançamento.
-        </div>
+        <EmptyState>Selecione uma prova acima para começar o lançamento.</EmptyState>
       ) : (
         <ResultadosGrid
           linhas={linhas}

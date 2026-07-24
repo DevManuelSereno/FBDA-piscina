@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
 import { RegraFormDialog } from "./regra-form-dialog";
 import { PosicoesEditorDialog } from "./posicoes-editor-dialog";
 import { RegraRowActions } from "./regra-row-actions";
@@ -77,9 +78,9 @@ export default async function PontuacaoPage() {
         ))}
 
         {regras.length === 0 && (
-          <div className="flex items-center gap-2 rounded-md border border-dashed p-6 text-muted-foreground lg:col-span-2">
+          <EmptyState className="lg:col-span-2">
             Nenhuma regra cadastrada. Crie a primeira regra de pontuação.
-          </div>
+          </EmptyState>
         )}
       </div>
     </div>

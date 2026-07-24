@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { tipoCompeticaoSchema } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
-
-export type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult } from "@/lib/action-result";
 
 function parseTipoCompeticaoForm(formData: FormData) {
   return tipoCompeticaoSchema.safeParse({
@@ -47,7 +46,7 @@ export async function createTipoCompeticao(
   }
 
   revalidatePath("/tipos-competicao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Tipo de competição criado com sucesso." };
 }
 
 export async function updateTipoCompeticao(
@@ -80,7 +79,7 @@ export async function updateTipoCompeticao(
   }
 
   revalidatePath("/tipos-competicao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Tipo de competição atualizado com sucesso." };
 }
 
 export async function deleteTipoCompeticao(id: string): Promise<ActionResult> {
@@ -97,5 +96,5 @@ export async function deleteTipoCompeticao(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/tipos-competicao");
-  return { success: true };
+  return { success: true, mensagemSucesso: "Tipo de competição excluído com sucesso." };
 }

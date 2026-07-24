@@ -11,6 +11,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
@@ -97,16 +98,51 @@ export function DataTable<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  // Colunas de exibição sem cabeçalho de texto (ex.: a
+                  // coluna de ações editar/excluir, header: "") não têm
+                  // valor útil para ordenar — mesmo com getCanSort() true
+                  // por padrão, não mostramos a affordance de clique nelas.
+                  const canSort =
+                    !header.isPlaceholder &&
+                    header.column.getCanSort() &&
+                    header.column.columnDef.header !== "";
+                  const sorted = header.column.getIsSorted();
+
+                  return (
+                    <TableHead
+                      key={header.id}
+                      onClick={
+                        canSort
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
+                      className={
+                        canSort ? "cursor-pointer select-none" : undefined
+                      }
+                    >
+                      {header.isPlaceholder ? null : (
+                        <span className="inline-flex items-center gap-1">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {canSort &&
+                            (sorted === "asc" ? (
+                              <ChevronUp className="size-3.5" aria-hidden="true" />
+                            ) : sorted === "desc" ? (
+                              <ChevronDown className="size-3.5" aria-hidden="true" />
+                            ) : (
+                              <ChevronsUpDown
+                                className="size-3.5 text-muted-foreground/50"
+                                aria-hidden="true"
+                              />
+                            ))}
+                        </span>
+                      )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
