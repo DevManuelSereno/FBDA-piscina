@@ -16,7 +16,6 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -181,39 +180,21 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                         }}
                       />
                       <InputGroupAddon align="inline-end">
-                        <Popover
-                          open={calendarioAberto}
-                          onOpenChange={(open, eventDetails) => {
-                            // O select nativo de mês/ano do Calendar abre seu
-                            // dropdown fora da árvore do DOM (é renderizado pelo
-                            // navegador/SO). O Base UI interpreta a interação com
-                            // esse dropdown nativo (focus-out ao abrir, ou
-                            // outside-press ao confirmar a opção) como motivo
-                            // para fechar o Popover antes do usuário concluir a
-                            // escolha. Em vez de depender do texto do motivo
-                            // (que varia por navegador), ignoramos qualquer
-                            // fechamento cujo alvo do evento esteja dentro do
-                            // Calendar — clique realmente fora, Esc e a seleção
-                            // de dia (que já fecha explicitamente no onSelect)
-                            // continuam funcionando normalmente.
-                            if (!open) {
-                              const eventTarget = eventDetails.event?.target as
-                                | HTMLElement
-                                | null
-                                | undefined;
-                              const active = document.activeElement as HTMLElement | null;
-                              const insideCalendar =
-                                eventTarget?.closest?.('[data-slot="calendar"]') ??
-                                eventDetails.trigger?.closest?.('[data-slot="calendar"]') ??
-                                active?.closest?.('[data-slot="calendar"]');
-                              if (insideCalendar) {
-                                return;
-                              }
-                            }
-                            setCalendarioAberto(open);
-                          }}
-                        >
-                          <PopoverTrigger
+                        {/* Popover foi trocado por Dialog: o <select> nativo
+                            de mês/ano do Calendar abre seu dropdown fora da
+                            árvore do DOM (renderizado pelo navegador/SO), e o
+                            Base UI interpretava até o clique de ABRIR esse
+                            dropdown como uma interação "fora" do Popover,
+                            fechando-o instantaneamente antes do usuário
+                            conseguir escolher a opção — em navegadores reais,
+                            não só em casos sintéticos de teste. Dialog não
+                            depende de heurística de foco/clique-fora para
+                            decidir quando fechar (só fecha via Esc, backdrop
+                            ou ação explícita), então não sofre desse bug —
+                            já é o padrão comprovadamente estável usado nos
+                            outros 13+ diálogos do projeto. */}
+                        <Dialog open={calendarioAberto} onOpenChange={setCalendarioAberto}>
+                          <DialogTrigger
                             render={
                               <InputGroupButton
                                 variant="ghost"
@@ -225,7 +206,10 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                             }
                           />
                           {calendarioAberto && (
-                            <PopoverContent align="end" className="w-auto p-0">
+                            <DialogContent className="w-auto p-2">
+                              <DialogHeader>
+                                <DialogTitle>Selecionar data de nascimento</DialogTitle>
+                              </DialogHeader>
                               <Calendar
                                 mode="single"
                                 selected={field.value}
@@ -237,9 +221,9 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                                   setCalendarioAberto(false);
                                 }}
                               />
-                            </PopoverContent>
+                            </DialogContent>
                           )}
-                        </Popover>
+                        </Dialog>
                       </InputGroupAddon>
                     </InputGroup>
                   )}
