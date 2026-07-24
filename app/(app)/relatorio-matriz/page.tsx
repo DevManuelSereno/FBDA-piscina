@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { buscarMatriz } from "@/lib/relatorio-matriz-query";
 import { FiltrosMatriz, type FiltrosMatrizValores } from "./filtros";
 import { MatrizTable } from "./matriz-table";
 import { ExportarPdfButton } from "./exportar-pdf-button";
+
+export const metadata: Metadata = {
+  title: "Relatório Matriz",
+};
 
 export default async function RelatorioMatrizPage({
   searchParams,

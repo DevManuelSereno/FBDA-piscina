@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { DataTable } from "@/components/data-table";
 import { CircuitoFormDialog } from "./circuito-form-dialog";
 import { columns } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Circuitos",
+};
 
 export default async function CircuitosPage() {
   const circuitos = await prisma.circuito.findMany({

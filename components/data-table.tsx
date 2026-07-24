@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Table,
@@ -25,6 +26,7 @@ import {
 
 export type DataTableFilter = {
   columnId: string;
+  label: string;
   placeholder: string;
   options: { value: string; label: string }[];
 };
@@ -69,29 +71,36 @@ export function DataTable<TData, TValue>({
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
-        {filters.map((filter) => (
-          <NativeSelect
-            key={filter.columnId}
-            className="w-auto max-w-48"
-            aria-label={filter.placeholder}
-            value={
-              (table.getColumn(filter.columnId)?.getFilterValue() as string) ??
-              ""
-            }
-            onChange={(event) =>
-              table
-                .getColumn(filter.columnId)
-                ?.setFilterValue(event.target.value || undefined)
-            }
-          >
-            <option value="">{filter.placeholder}</option>
-            {filter.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </NativeSelect>
-        ))}
+        {filters.map((filter) => {
+          const selectId = `filter-${filter.columnId}`;
+          return (
+            <div key={filter.columnId} className="flex flex-col gap-1">
+              <Label htmlFor={selectId} className="sr-only">
+                Filtrar por {filter.label}
+              </Label>
+              <NativeSelect
+                id={selectId}
+                className="w-auto max-w-48"
+                value={
+                  (table.getColumn(filter.columnId)?.getFilterValue() as string) ??
+                  ""
+                }
+                onChange={(event) =>
+                  table
+                    .getColumn(filter.columnId)
+                    ?.setFilterValue(event.target.value || undefined)
+                }
+              >
+                <option value="">{filter.placeholder}</option>
+                {filter.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          );
+        })}
       </div>
       <div className="rounded-md border">
         <Table>

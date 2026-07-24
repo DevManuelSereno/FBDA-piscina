@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { TipoCompeticaoFormDialog } from "./tipo-competicao-form-dialog";
 import { TiposCompeticaoTable } from "./tipos-competicao-table";
 import type { TipoCompeticaoRow } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Tipos de Competição",
+};
 
 export default async function TiposCompeticaoPage() {
   const [tipos, circuitos, regras] = await Promise.all([

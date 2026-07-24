@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { inferirCategoria } from "@/lib/categoria";
 import { EmptyState } from "@/components/empty-state";
 import { SeletorCircuitoCompeticao } from "./seletor";
 import { LancamentoGrid, type LinhaLancamento } from "./lancamento-grid";
+
+export const metadata: Metadata = {
+  title: "Lançamento de Pontos",
+};
 
 export default async function LancamentoPontosPage({
   searchParams,

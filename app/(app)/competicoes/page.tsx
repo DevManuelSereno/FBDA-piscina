@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { CompeticaoFormDialog } from "./competicao-form-dialog";
 import { CompeticoesTable } from "./competicoes-table";
 import type { CompeticaoRow } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Competições",
+};
 
 export default async function CompeticoesPage() {
   const [competicoes, tiposRaw] = await Promise.all([

@@ -5,15 +5,53 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false)
+  const [canScrollRight, setCanScrollRight] = React.useState(false)
+
+  const updateScrollShadows = React.useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 0)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+
+  React.useEffect(() => {
+    updateScrollShadows()
+    const el = containerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(updateScrollShadows)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [updateScrollShadows])
+
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
+    <div className="relative w-full">
+      <div
+        ref={containerRef}
+        data-slot="table-container"
+        onScroll={updateScrollShadows}
+        className="w-full overflow-x-auto"
+      >
+        <table
+          data-slot="table"
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-background to-transparent transition-opacity",
+          canScrollLeft ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-background to-transparent transition-opacity",
+          canScrollRight ? "opacity-100" : "opacity-0",
+        )}
       />
     </div>
   )

@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { CategoriaFormDialog } from "./categoria-form-dialog";
 import { CategoriasTable } from "./categorias-table";
 import type { CategoriaRow } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Categorias",
+};
 
 export default async function CategoriasPage() {
   const [categorias, circuitos] = await Promise.all([

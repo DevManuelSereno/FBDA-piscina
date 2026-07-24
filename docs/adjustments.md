@@ -165,8 +165,8 @@ Botões `icon-sm` (28×28px) lado a lado com `gap-1` (4px) nas 9 telas CRUD — 
 `app/(app)/ranking/filtros.tsx` renderiza 6 `NativeSelect` numa grade plana (Circuito, Escopo, Competição/Temporada, Categoria, Clube, Sexo) — excede o limite prático de ~4 opções simultâneas por ponto de decisão. Agrupar em dois blocos visuais: "Escopo" (Circuito + Completo/Provisório + Competição-ou-Temporada) e "Filtrar por" (Categoria + Clube + Sexo), com um separador ou rótulo de grupo entre eles.
 
 ### F3. Dependências mortas no `package.json`
-- `react-hook-form` e `@hookform/resolvers`: nunca importados em nenhum arquivo (os formulários usam Server Actions nativas + `useActionState`). Remover.
-- `shadcn`: está em `dependencies`, deveria estar em `devDependencies` (é só a CLI de scaffolding, não roda em produção).
+- `react-hook-form` e `@hookform/resolvers`: nunca importados em nenhum arquivo (os formulários usam Server Actions nativas + `useActionState`). Removido.
+- `shadcn`: **correção pós-execução** — a suposição original de que era "só a CLI de scaffolding" estava errada. `app/globals.css` importa `shadcn/tailwind.css` (`@import "shadcn/tailwind.css";`), consumido em build/runtime pelo Tailwind. Mover para `devDependencies` quebrou o build (`CssSyntaxError: Can't resolve 'shadcn/tailwind.css'`). Mantido em `dependencies`.
 
 ### F4. Dashboard genérico (observação menor, sem prioridade definida)
 `app/(app)/dashboard/page.tsx` é 4 cards de contagem estáticos, sem nada específico da federação nem clique para a seção correspondente. Não é um bug — é uma oportunidade de tornar a tela de entrada mais útil (ex.: cards clicáveis levando para `/atletas`, `/competicoes`, etc., ou destacar a próxima competição cadastrada). Fica em aberto até decidir se vale o esforço agora.

@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { inferirCategoria } from "@/lib/categoria";
 import { AtletaFormDialog } from "./atleta-form-dialog";
 import { AtletasTable } from "./atletas-table";
 import type { AtletaRow } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Atletas",
+};
 
 export default async function AtletasPage() {
   const [atletas, clubes, categorias, circuitoPadrao] = await Promise.all([

@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { DataTable } from "@/components/data-table";
 import { ProvaFormDialog } from "./prova-form-dialog";
 import { columns } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Provas",
+};
 
 export default async function ProvasPage() {
   const provas = await prisma.prova.findMany({

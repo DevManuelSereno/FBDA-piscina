@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { LoginForm } from "@/components/login-form";
+
+export const metadata: Metadata = {
+  title: "Login",
+};
 
 export default function LoginPage() {
   return (
@@ -15,7 +19,9 @@ export default function LoginPage() {
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             FBDA
           </span>
-          <CardTitle className="text-2xl">Ranking de Natação</CardTitle>
+          <h1 className="font-heading text-2xl leading-snug font-medium">
+            Ranking de Natação
+          </h1>
           <CardDescription>
             Entre com sua conta para gerenciar atletas, resultados e ranking.
           </CardDescription>

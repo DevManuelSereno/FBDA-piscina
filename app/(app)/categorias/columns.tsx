@@ -45,7 +45,7 @@ export function buildColumns({
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-2">
           <CategoriaFormDialog
             mode="edit"
             categoria={row.original}

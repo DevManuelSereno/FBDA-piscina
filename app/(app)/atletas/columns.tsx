@@ -56,7 +56,7 @@ export function buildColumns({
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-2">
           <AtletaFormDialog mode="edit" atleta={row.original} clubes={clubes} />
           <AtletaDeleteButton
             id={row.original.id}

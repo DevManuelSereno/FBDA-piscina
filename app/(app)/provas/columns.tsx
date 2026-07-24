@@ -25,7 +25,7 @@ export const columns: ColumnDef<ProvaRow>[] = [
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <div className="flex justify-end gap-1">
+      <div className="flex justify-end gap-2">
         <ProvaFormDialog mode="edit" prova={row.original} />
         <ProvaDeleteButton id={row.original.id} nome={row.original.nome} />
       </div>

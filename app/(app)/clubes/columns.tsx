@@ -36,7 +36,7 @@ export const columns: ColumnDef<ClubeRow>[] = [
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <div className="flex justify-end gap-1">
+      <div className="flex justify-end gap-2">
         <ClubeFormDialog mode="edit" clube={row.original} />
         <ClubeDeleteButton id={row.original.id} nome={row.original.nome} />
       </div>

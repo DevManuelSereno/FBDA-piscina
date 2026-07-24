@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Building2, ClipboardList, Trophy, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import {
@@ -6,6 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default async function DashboardPage() {
   const [clubes, atletas, competicoes, resultados] = await Promise.all([

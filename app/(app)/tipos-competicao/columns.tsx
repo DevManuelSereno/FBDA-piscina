@@ -46,7 +46,7 @@ export function buildColumns({
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-2">
           <TipoCompeticaoFormDialog
             mode="edit"
             tipo={row.original}

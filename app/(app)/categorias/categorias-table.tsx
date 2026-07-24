@@ -21,6 +21,7 @@ export function CategoriasTable({
       filters={[
         {
           columnId: "circuitoNome",
+          label: "Circuito",
           placeholder: "Todos os circuitos",
           options: circuitos.map((c) => ({ value: c.nome, label: c.nome })),
         },

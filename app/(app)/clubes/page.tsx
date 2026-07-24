@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { DataTable } from "@/components/data-table";
 import { ClubeFormDialog } from "./clube-form-dialog";
 import { columns } from "./columns";
+
+export const metadata: Metadata = {
+  title: "Clubes",
+};
 
 export default async function ClubesPage() {
   const clubes = await prisma.clube.findMany({

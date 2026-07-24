@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { inferirCategoria } from "@/lib/categoria";
 import { EmptyState } from "@/components/empty-state";
 import { SeletorCompeticaoProva } from "./seletor";
 import { ResultadosGrid, type LinhaResultado } from "./resultados-grid";
+
+export const metadata: Metadata = {
+  title: "Lançamento de Resultados",
+};
 
 export default async function ResultadosPage({
   searchParams,

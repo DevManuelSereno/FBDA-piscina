@@ -17,7 +17,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ranking FBDA",
+  title: {
+    default: "Ranking FBDA",
+    template: "%s — Ranking FBDA",
+  },
   description: "Sistema de gestão de atletas, pontuação e ranking de natação",
 };
 

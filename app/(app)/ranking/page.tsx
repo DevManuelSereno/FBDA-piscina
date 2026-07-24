@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { buscarRanking } from "@/lib/ranking-query";
 import { FiltrosRanking, type FiltrosRankingValores } from "./filtros";
 import { RankingIndividualTable } from "./ranking-individual-table";
 import { RankingColetivoTable } from "./ranking-coletivo-table";
 import { ExportarPdfButtons } from "./exportar-pdf-buttons";
+
+export const metadata: Metadata = {
+  title: "Ranking",
+};
 
 export default async function RankingPage({
   searchParams,

@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Separator } from "@/components/ui/separator";
 
 export type FiltrosRankingValores = {
   tipo: "completo" | "provisorio";
@@ -57,116 +58,132 @@ export function FiltrosRanking({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="circuitoId">Circuito</Label>
-        <NativeSelect
-          id="circuitoId"
-          value={valores.circuitoId}
-          onChange={(e) => atualizar({ circuitoId: e.target.value })}
-        >
-          <option value="">Todos</option>
-          {circuitos.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+        <span className="text-xs font-medium text-muted-foreground">
+          Escopo
+        </span>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="circuitoId">Circuito</Label>
+            <NativeSelect
+              id="circuitoId"
+              value={valores.circuitoId}
+              onChange={(e) => atualizar({ circuitoId: e.target.value })}
+            >
+              <option value="">Todos</option>
+              {circuitos.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="tipo">Escopo</Label>
-        <NativeSelect
-          id="tipo"
-          value={valores.tipo}
-          onChange={(e) =>
-            atualizar({
-              tipo: e.target.value as "completo" | "provisorio",
-            })
-          }
-        >
-          <option value="completo">Completo (temporada)</option>
-          <option value="provisorio">Provisório (1 competição)</option>
-        </NativeSelect>
-      </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="tipo">Provisório/Completo</Label>
+            <NativeSelect
+              id="tipo"
+              value={valores.tipo}
+              onChange={(e) =>
+                atualizar({
+                  tipo: e.target.value as "completo" | "provisorio",
+                })
+              }
+            >
+              <option value="completo">Completo (temporada)</option>
+              <option value="provisorio">Provisório (1 competição)</option>
+            </NativeSelect>
+          </div>
 
-      {valores.tipo === "provisorio" ? (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="competicaoId">Competição</Label>
-          <NativeSelect
-            id="competicaoId"
-            value={valores.competicaoId}
-            onChange={(e) => atualizar({ competicaoId: e.target.value })}
-          >
-            <option value="">Selecione...</option>
-            {competicoes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </NativeSelect>
+          {valores.tipo === "provisorio" ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="competicaoId">Competição</Label>
+              <NativeSelect
+                id="competicaoId"
+                value={valores.competicaoId}
+                onChange={(e) => atualizar({ competicaoId: e.target.value })}
+              >
+                <option value="">Selecione...</option>
+                {competicoes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="temporada">Temporada</Label>
+              <NativeSelect
+                id="temporada"
+                value={valores.temporada}
+                onChange={(e) => atualizar({ temporada: e.target.value })}
+              >
+                <option value="">Todas</option>
+                {temporadas.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="temporada">Temporada</Label>
-          <NativeSelect
-            id="temporada"
-            value={valores.temporada}
-            onChange={(e) => atualizar({ temporada: e.target.value })}
-          >
-            <option value="">Todas</option>
-            {temporadas.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </NativeSelect>
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Filtrar por
+        </span>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="categoriaId">Categoria</Label>
+            <NativeSelect
+              id="categoriaId"
+              value={valores.categoriaId}
+              onChange={(e) => atualizar({ categoriaId: e.target.value })}
+            >
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome} ({c.sexo})
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="clubeId">Clube</Label>
+            <NativeSelect
+              id="clubeId"
+              value={valores.clubeId}
+              onChange={(e) => atualizar({ clubeId: e.target.value })}
+            >
+              <option value="">Todos</option>
+              {clubes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="sexo">Sexo</Label>
+            <NativeSelect
+              id="sexo"
+              value={valores.sexo}
+              onChange={(e) => atualizar({ sexo: e.target.value })}
+            >
+              <option value="">Todos</option>
+              <option value="M">M</option>
+              <option value="F">F</option>
+            </NativeSelect>
+          </div>
         </div>
-      )}
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="categoriaId">Categoria</Label>
-        <NativeSelect
-          id="categoriaId"
-          value={valores.categoriaId}
-          onChange={(e) => atualizar({ categoriaId: e.target.value })}
-        >
-          <option value="">Todas</option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome} ({c.sexo})
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="clubeId">Clube</Label>
-        <NativeSelect
-          id="clubeId"
-          value={valores.clubeId}
-          onChange={(e) => atualizar({ clubeId: e.target.value })}
-        >
-          <option value="">Todos</option>
-          {clubes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="sexo">Sexo</Label>
-        <NativeSelect
-          id="sexo"
-          value={valores.sexo}
-          onChange={(e) => atualizar({ sexo: e.target.value })}
-        >
-          <option value="">Todos</option>
-          <option value="M">M</option>
-          <option value="F">F</option>
-        </NativeSelect>
       </div>
     </div>
   );

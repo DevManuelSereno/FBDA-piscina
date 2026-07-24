@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
@@ -5,6 +6,10 @@ import { RegraFormDialog } from "./regra-form-dialog";
 import { PosicoesEditorDialog } from "./posicoes-editor-dialog";
 import { RegraRowActions } from "./regra-row-actions";
 import { RecalcularButton } from "./recalcular-button";
+
+export const metadata: Metadata = {
+  title: "Pontuação",
+};
 
 export default async function PontuacaoPage() {
   const regras = await prisma.regraPontuacao.findMany({
