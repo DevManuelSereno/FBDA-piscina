@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   PenLine,
   Tag,
+  Table2,
   Trophy,
   Users,
   Waves,
@@ -43,6 +44,7 @@ const operacaoItems = [
   { title: "Lançamento de Pontos", url: "/lancamento-pontos", icon: PenLine },
   { title: "Pontuação", url: "/pontuacao", icon: Calculator },
   { title: "Ranking", url: "/ranking", icon: Trophy },
+  { title: "Relatório Matriz", url: "/relatorio-matriz", icon: Table2 },
 ];
 
 export function AppSidebar() {
