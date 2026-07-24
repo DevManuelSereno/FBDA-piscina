@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Loader2, Pencil, Plus } from "lucide-react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { CalendarIcon, Loader2, Pencil, Plus, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,6 +22,8 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -180,19 +183,20 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                         }}
                       />
                       <InputGroupAddon align="inline-end">
-                        {/* Popover foi trocado por Dialog: o <select> nativo
-                            de mês/ano do Calendar abre seu dropdown fora da
-                            árvore do DOM (renderizado pelo navegador/SO), e o
-                            Base UI interpretava até o clique de ABRIR esse
-                            dropdown como uma interação "fora" do Popover,
-                            fechando-o instantaneamente antes do usuário
-                            conseguir escolher a opção — em navegadores reais,
-                            não só em casos sintéticos de teste. Dialog não
-                            depende de heurística de foco/clique-fora para
-                            decidir quando fechar (só fecha via Esc, backdrop
-                            ou ação explícita), então não sofre desse bug —
-                            já é o padrão comprovadamente estável usado nos
-                            outros 13+ diálogos do projeto. */}
+                        {/* O <select> nativo de mês/ano do Calendar não abre
+                            de forma confiável quando um ancestral usa
+                            `transform` CSS (é um bug cross-browser conhecido:
+                            navegadores posicionam o dropdown nativo em relação
+                            ao espaço de coordenadas transformado, e o popup
+                            pode falhar ao abrir ou fechar instantaneamente).
+                            O DialogContent padrão do projeto centraliza via
+                            `-translate-x-1/2 -translate-y-1/2`, então trocar
+                            de Popover para Dialog sozinho não resolvia — o
+                            usuário confirmou por vídeo que o bug persistia.
+                            Aqui montamos o popup manualmente com os
+                            primitivos do Base UI, centralizando por flexbox
+                            (sem transform) especificamente para este
+                            calendário aninhado. */}
                         <Dialog open={calendarioAberto} onOpenChange={setCalendarioAberto}>
                           <DialogTrigger
                             render={
@@ -206,22 +210,36 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                             }
                           />
                           {calendarioAberto && (
-                            <DialogContent className="w-auto p-2">
-                              <DialogHeader>
-                                <DialogTitle>Selecionar data de nascimento</DialogTitle>
-                              </DialogHeader>
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                captionLayout="dropdown"
-                                onSelect={(date) => {
-                                  if (!date) return;
-                                  field.onChange(date);
-                                  setDataNascimentoTexto(formatDataPtBr(date));
-                                  setCalendarioAberto(false);
-                                }}
-                              />
-                            </DialogContent>
+                            <DialogPortal>
+                              <DialogOverlay />
+                              <DialogPrimitive.Popup
+                                data-slot="dialog-content"
+                                className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
+                              >
+                                <div className="flex flex-col gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10">
+                                  <div className="flex items-center justify-between gap-4">
+                                    <DialogTitle>Data de nascimento</DialogTitle>
+                                    <DialogPrimitive.Close
+                                      render={<Button variant="ghost" size="icon-sm" />}
+                                    >
+                                      <XIcon />
+                                      <span className="sr-only">Fechar</span>
+                                    </DialogPrimitive.Close>
+                                  </div>
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    captionLayout="dropdown"
+                                    onSelect={(date) => {
+                                      if (!date) return;
+                                      field.onChange(date);
+                                      setDataNascimentoTexto(formatDataPtBr(date));
+                                      setCalendarioAberto(false);
+                                    }}
+                                  />
+                                </div>
+                              </DialogPrimitive.Popup>
+                            </DialogPortal>
                           )}
                         </Dialog>
                       </InputGroupAddon>
