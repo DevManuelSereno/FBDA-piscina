@@ -90,12 +90,12 @@ export function CircuitoFormDialog(props: CircuitoFormDialogProps) {
                 required
               />
             </div>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 name="ativo"
                 defaultChecked={circuito?.ativo ?? true}
-                className="size-4 rounded border-input"
+                className="size-4 cursor-pointer rounded border-input"
               />
               Ativo
             </label>

@@ -156,12 +156,12 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 name="autoClassificavel"
                 defaultChecked={categoria?.autoClassificavel ?? true}
-                className="size-4 rounded border-input"
+                className="size-4 cursor-pointer rounded border-input"
               />
               Classificar atletas automaticamente por idade
             </label>
