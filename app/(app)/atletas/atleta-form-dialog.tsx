@@ -186,12 +186,30 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                           onOpenChange={(open, eventDetails) => {
                             // O select nativo de mês/ano do Calendar abre seu
                             // dropdown fora da árvore do DOM (é renderizado pelo
-                            // navegador/SO) — o Base UI interpreta isso como o
-                            // foco saindo do Popover ("focus-out") e fecha antes
-                            // do usuário conseguir escolher a opção. Ignorar
-                            // esse motivo específico não afeta o fechamento por
-                            // clique fora, Esc ou seleção de dia.
-                            if (!open && eventDetails.reason === "focus-out") return;
+                            // navegador/SO). O Base UI interpreta a interação com
+                            // esse dropdown nativo (focus-out ao abrir, ou
+                            // outside-press ao confirmar a opção) como motivo
+                            // para fechar o Popover antes do usuário concluir a
+                            // escolha. Em vez de depender do texto do motivo
+                            // (que varia por navegador), ignoramos qualquer
+                            // fechamento cujo alvo do evento esteja dentro do
+                            // Calendar — clique realmente fora, Esc e a seleção
+                            // de dia (que já fecha explicitamente no onSelect)
+                            // continuam funcionando normalmente.
+                            if (!open) {
+                              const eventTarget = eventDetails.event?.target as
+                                | HTMLElement
+                                | null
+                                | undefined;
+                              const active = document.activeElement as HTMLElement | null;
+                              const insideCalendar =
+                                eventTarget?.closest?.('[data-slot="calendar"]') ??
+                                eventDetails.trigger?.closest?.('[data-slot="calendar"]') ??
+                                active?.closest?.('[data-slot="calendar"]');
+                              if (insideCalendar) {
+                                return;
+                              }
+                            }
                             setCalendarioAberto(open);
                           }}
                         >
