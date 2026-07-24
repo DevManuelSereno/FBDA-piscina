@@ -24,7 +24,11 @@ export function buildColumns({
   circuitos,
 }: CategoriaColumnsProps): ColumnDef<CategoriaRow>[] {
   return [
-    { accessorKey: "circuitoNome", header: "Circuito" },
+    {
+      accessorKey: "circuitoNome",
+      header: "Circuito",
+      filterFn: "equalsString",
+    },
     { accessorKey: "nome", header: "Nome" },
     { accessorKey: "sexo", header: "Sexo" },
     {

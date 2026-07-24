@@ -18,6 +18,13 @@ export function CategoriasTable({
       columns={buildColumns({ circuitos })}
       data={rows}
       searchPlaceholder="Buscar categoria..."
+      filters={[
+        {
+          columnId: "circuitoNome",
+          placeholder: "Todos os circuitos",
+          options: circuitos.map((c) => ({ value: c.nome, label: c.nome })),
+        },
+      ]}
     />
   );
 }
