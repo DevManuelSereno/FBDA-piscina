@@ -147,7 +147,20 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                     required
                   />
                   <InputGroupAddon align="inline-end">
-                    <Popover open={calendarioAberto} onOpenChange={setCalendarioAberto}>
+                    <Popover
+                      open={calendarioAberto}
+                      onOpenChange={(open, eventDetails) => {
+                        // O select nativo de mês/ano do Calendar abre seu
+                        // dropdown fora da árvore do DOM (é renderizado pelo
+                        // navegador/SO) — o Base UI interpreta isso como o
+                        // foco saindo do Popover ("focus-out") e fecha antes
+                        // do usuário conseguir escolher a opção. Ignorar
+                        // esse motivo específico não afeta o fechamento por
+                        // clique fora, Esc ou seleção de dia.
+                        if (!open && eventDetails.reason === "focus-out") return;
+                        setCalendarioAberto(open);
+                      }}
+                    >
                       <PopoverTrigger
                         render={
                           <InputGroupButton
