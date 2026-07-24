@@ -5,26 +5,20 @@ import { prisma } from "@/lib/db";
 import { calcularPontos, validarPosicoes, type PosicaoPontos } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth-guard";
 import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
+import { regraSchema, type RegraInput } from "@/lib/validations";
 import type { ActionResult } from "@/lib/action-result";
 
-export async function createRegra(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createRegra(data: RegraInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const nome = String(formData.get("nome") ?? "").trim();
-  const tipo = formData.get("tipo");
-  if (!nome) {
-    return { error: "Informe o nome da regra." };
-  }
-  if (tipo !== "COLOCACAO" && tipo !== "FINA") {
-    return { error: "Selecione o tipo da regra." };
+  const parsed = regraSchema.safeParse(data);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
   await prisma.regraPontuacao.create({
-    data: { nome, tipo, ativo: false },
+    data: { ...parsed.data, ativo: false },
   });
 
   revalidatePath("/pontuacao");

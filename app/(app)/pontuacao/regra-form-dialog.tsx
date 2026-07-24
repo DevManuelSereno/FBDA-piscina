@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -14,22 +17,49 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import type { ActionResult } from "@/lib/action-result";
+import { regraSchema, type RegraInput } from "@/lib/validations";
 import { createRegra } from "./actions";
 
-const initialState: ActionResult = {};
+const defaultValues: RegraInput = { nome: "", tipo: "COLOCACAO" };
 
 export function RegraFormDialog() {
   const [open, setOpen] = useState(false);
-  const [state, formAction, isPending] = useActionState(
-    createRegra,
-    initialState,
-  );
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<RegraInput>({
+    resolver: zodResolver(regraSchema),
+    defaultValues,
+  });
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado = await createRegra(data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           <Button>
@@ -43,28 +73,28 @@ export function RegraFormDialog() {
           <DialogHeader>
             <DialogTitle>Nova regra de pontuação</DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
               <Input
                 id="nome"
-                name="nome"
-                required
-                minLength={2}
                 placeholder="Ex.: Colocação Padrão (1º-8º)"
+                {...register("nome")}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="tipo">Tipo</Label>
-              <NativeSelect id="tipo" name="tipo" defaultValue="COLOCACAO">
+              <FieldError errors={[errors.nome]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
+              <NativeSelect id="tipo" {...register("tipo")}>
                 <option value="COLOCACAO">Por colocação</option>
                 <option value="FINA">Por tempo (FINA)</option>
               </NativeSelect>
-            </div>
+              <FieldError errors={[errors.tipo]} />
+            </Field>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 

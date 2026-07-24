@@ -2,27 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { clubeSchema } from "@/lib/validations";
+import { clubeSchema, type ClubeInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseClubeForm(formData: FormData) {
-  return clubeSchema.safeParse({
-    nome: formData.get("nome"),
-    sigla: formData.get("sigla"),
-    cidade: formData.get("cidade"),
-  });
-}
-
-export async function createClube(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createClube(data: ClubeInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseClubeForm(formData);
+  const parsed = clubeSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -43,13 +32,12 @@ export async function createClube(
 
 export async function updateClube(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: ClubeInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseClubeForm(formData);
+  const parsed = clubeSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

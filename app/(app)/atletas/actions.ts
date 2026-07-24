@@ -2,29 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { atletaSchema } from "@/lib/validations";
+import { atletaSchema, type AtletaInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseAtletaForm(formData: FormData) {
-  return atletaSchema.safeParse({
-    nomeCompleto: formData.get("nomeCompleto"),
-    dataNascimento: formData.get("dataNascimento"),
-    sexo: formData.get("sexo"),
-    clubeId: formData.get("clubeId"),
-    ativo: formData.get("ativo") === "on",
-    numero: formData.get("numero"),
-  });
-}
-
-export async function createAtleta(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createAtleta(data: AtletaInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseAtletaForm(formData);
+  const parsed = atletaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -36,13 +22,12 @@ export async function createAtleta(
 
 export async function updateAtleta(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: AtletaInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseAtletaForm(formData);
+  const parsed = atletaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

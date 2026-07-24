@@ -2,27 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { circuitoSchema } from "@/lib/validations";
+import { circuitoSchema, type CircuitoInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseCircuitoForm(formData: FormData) {
-  return circuitoSchema.safeParse({
-    nome: formData.get("nome"),
-    ordem: formData.get("ordem"),
-    ativo: formData.get("ativo") === "on",
-  });
-}
-
-export async function createCircuito(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createCircuito(data: CircuitoInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCircuitoForm(formData);
+  const parsed = circuitoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -43,13 +32,12 @@ export async function createCircuito(
 
 export async function updateCircuito(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: CircuitoInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCircuitoForm(formData);
+  const parsed = circuitoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

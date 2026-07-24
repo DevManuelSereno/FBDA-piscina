@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import type { ActionResult } from "@/lib/action-result";
+import { circuitoSchema, type CircuitoInput } from "@/lib/validations";
 import { createCircuito, updateCircuito } from "./actions";
 
 type Circuito = {
@@ -28,21 +30,55 @@ type CircuitoFormDialogProps =
   | { mode: "create" }
   | { mode: "edit"; circuito: Circuito };
 
-const initialState: ActionResult = {};
-
 export function CircuitoFormDialog(props: CircuitoFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const action =
-    props.mode === "create"
-      ? createCircuito
-      : updateCircuito.bind(null, props.circuito.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const circuito = props.mode === "edit" ? props.circuito : undefined;
 
+  const defaultValues: CircuitoInput = {
+    nome: circuito?.nome ?? "",
+    ordem: circuito?.ordem ?? 0,
+    ativo: circuito?.ativo ?? true,
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CircuitoInput>({
+    resolver: zodResolver(circuitoSchema),
+    defaultValues,
+  });
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado =
+        props.mode === "create"
+          ? await createCircuito(data)
+          : await updateCircuito(props.circuito.id, data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           props.mode === "create" ? (
@@ -68,42 +104,38 @@ export function CircuitoFormDialog(props: CircuitoFormDialogProps) {
               {props.mode === "create" ? "Novo circuito" : "Editar circuito"}
             </DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
               <Input
                 id="nome"
-                name="nome"
                 placeholder="Ex.: Infantil a Sênior, Master"
-                defaultValue={circuito?.nome}
-                required
-                minLength={2}
+                {...register("nome")}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="ordem">Ordem de exibição</Label>
+              <FieldError errors={[errors.nome]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="ordem">Ordem de exibição</FieldLabel>
               <Input
                 id="ordem"
-                name="ordem"
                 type="number"
                 min={0}
-                defaultValue={circuito?.ordem ?? 0}
-                required
+                {...register("ordem", { valueAsNumber: true })}
               />
-            </div>
+              <FieldError errors={[errors.ordem]} />
+            </Field>
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                name="ativo"
-                defaultChecked={circuito?.ativo ?? true}
                 className="size-4 cursor-pointer rounded border-input"
+                {...register("ativo")}
               />
               Ativo
             </label>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 

@@ -2,30 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { tipoCompeticaoSchema } from "@/lib/validations";
+import { tipoCompeticaoSchema, type TipoCompeticaoInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseTipoCompeticaoForm(formData: FormData) {
-  return tipoCompeticaoSchema.safeParse({
-    nome: formData.get("nome"),
-    circuitoId: formData.get("circuitoId"),
-    metodoPontuacao: formData.get("metodoPontuacao"),
-    grupoRelatorio: formData.get("grupoRelatorio"),
-    ordem: formData.get("ordem"),
-    regraPontuacaoId: formData.get("regraPontuacaoId"),
-  });
-}
-
 export async function createTipoCompeticao(
-  _prevState: ActionResult,
-  formData: FormData,
+  data: TipoCompeticaoInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseTipoCompeticaoForm(formData);
+  const parsed = tipoCompeticaoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -51,13 +39,12 @@ export async function createTipoCompeticao(
 
 export async function updateTipoCompeticao(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: TipoCompeticaoInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseTipoCompeticaoForm(formData);
+  const parsed = tipoCompeticaoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

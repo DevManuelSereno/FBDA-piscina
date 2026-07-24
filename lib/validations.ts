@@ -15,8 +15,8 @@ export type ClubeInput = z.infer<typeof clubeSchema>;
 
 export const circuitoSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome do circuito."),
-  ordem: z.coerce.number("Ordem inválida.").int().default(0),
-  ativo: z.coerce.boolean().default(true),
+  ordem: z.number("Ordem inválida.").int(),
+  ativo: z.boolean(),
 });
 export type CircuitoInput = z.infer<typeof circuitoSchema>;
 
@@ -25,11 +25,11 @@ export const categoriaSchema = z
   .object({
     nome: z.string().trim().min(2, "Informe o nome da categoria."),
     sexo: z.enum(SEXO_CATEGORIA),
-    idadeMin: z.coerce.number("Idade mínima inválida.").int().min(0),
-    idadeMax: z.coerce.number("Idade máxima inválida.").int().min(0),
+    idadeMin: z.number("Idade mínima inválida.").int().min(0),
+    idadeMax: z.number("Idade máxima inválida.").int().min(0),
     circuitoId: z.string().min(1, "Selecione um circuito."),
-    ordem: z.coerce.number("Ordem inválida.").int().default(0),
-    autoClassificavel: z.coerce.boolean().default(true),
+    ordem: z.number("Ordem inválida.").int(),
+    autoClassificavel: z.boolean(),
   })
   .refine((data) => data.idadeMax >= data.idadeMin, {
     message: "Idade máxima deve ser maior ou igual à idade mínima.",
@@ -46,7 +46,7 @@ export const tipoCompeticaoSchema = z
     grupoRelatorio: z.enum(GRUPOS_RELATORIO_VALORES, {
       error: "Selecione um grupo do relatório.",
     }),
-    ordem: z.coerce.number("Ordem inválida.").int().default(0),
+    ordem: z.number("Ordem inválida.").int(),
     regraPontuacaoId: z
       .string()
       .optional()
@@ -72,7 +72,7 @@ export const PISCINA = ["25m", "50m"] as const;
 export const provaSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome da prova."),
   estilo: z.enum(ESTILO_PROVA),
-  distancia: z.coerce
+  distancia: z
     .number("Distância inválida.")
     .int()
     .positive("Distância deve ser maior que zero."),
@@ -83,26 +83,45 @@ export type ProvaInput = z.infer<typeof provaSchema>;
 export const SEXO_ATLETA = ["M", "F"] as const;
 export const atletaSchema = z.object({
   nomeCompleto: z.string().trim().min(3, "Informe o nome completo."),
-  dataNascimento: z.coerce
+  dataNascimento: z
     .date("Data de nascimento inválida.")
     .max(new Date(), "Data de nascimento não pode ser no futuro."),
   sexo: z.enum(SEXO_ATLETA),
   clubeId: z.string().min(1, "Selecione um clube."),
-  ativo: z.coerce.boolean().default(true),
-  numero: z.coerce
+  ativo: z.boolean(),
+  numero: z
     .number("Número inválido.")
     .int()
     .positive("Número deve ser maior que zero.")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
+    .optional(),
 });
 export type AtletaInput = z.infer<typeof atletaSchema>;
 
 export const competicaoSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome da competição."),
-  data: z.coerce.date("Data inválida."),
+  data: z.date("Data inválida."),
   local: z.string().trim().optional().or(z.literal("")),
   temporada: z.string().trim().optional().or(z.literal("")),
   tipoCompeticaoId: z.string().min(1, "Selecione o tipo de competição."),
 });
 export type CompeticaoInput = z.infer<typeof competicaoSchema>;
+
+export const TIPO_REGRA = ["COLOCACAO", "FINA"] as const;
+export const regraSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o nome da regra."),
+  tipo: z.enum(TIPO_REGRA),
+});
+export type RegraInput = z.infer<typeof regraSchema>;
+
+// Validação por linha (posição/pontos individuais). Regras entre linhas
+// (sem duplicatas, ao menos uma posição) continuam em
+// lib/scoring.ts#validarPosicoes — é a mesma lógica já testada (TDD) e usada
+// como segunda camada de validação no servidor; não duplicar aqui.
+export const posicaoPontosSchema = z.object({
+  posicao: z.number("Posição inválida.").int().min(1, "A posição deve ser maior ou igual a 1."),
+  pontos: z.number("Pontos inválidos.").int().min(0, "Os pontos não podem ser negativos."),
+});
+export const posicoesFormSchema = z.object({
+  posicoes: z.array(posicaoPontosSchema).min(1, "Adicione ao menos uma posição."),
+});
+export type PosicoesFormInput = z.infer<typeof posicoesFormSchema>;

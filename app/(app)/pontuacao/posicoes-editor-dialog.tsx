@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ListOrdered, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { PosicaoPontos } from "@/lib/scoring";
+import { posicoesFormSchema, type PosicoesFormInput } from "@/lib/validations";
 import { salvarPosicoes } from "./actions";
 
 export function PosicoesEditorDialog({
@@ -27,49 +30,55 @@ export function PosicoesEditorDialog({
   posicoesIniciais: PosicaoPontos[];
 }) {
   const [open, setOpen] = useState(false);
-  const [linhas, setLinhas] = useState<PosicaoPontos[]>(posicoesIniciais);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function abrir(novoOpen: boolean) {
+  const defaultValues: PosicoesFormInput = { posicoes: posicoesIniciais };
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PosicoesFormInput>({
+    resolver: zodResolver(posicoesFormSchema),
+    defaultValues,
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "posicoes" });
+
+  function onOpenChange(novoOpen: boolean) {
     if (novoOpen) {
-      setLinhas(posicoesIniciais);
-      setError(null);
+      reset(defaultValues);
+      setServerError(null);
     }
     setOpen(novoOpen);
   }
 
-  function atualizarLinha(index: number, patch: Partial<PosicaoPontos>) {
-    setLinhas((prev) =>
-      prev.map((linha, i) => (i === index ? { ...linha, ...patch } : linha)),
-    );
-  }
-
   function adicionarLinha() {
     const proximaPosicao =
-      linhas.length > 0 ? Math.max(...linhas.map((l) => l.posicao)) + 1 : 1;
-    setLinhas((prev) => [...prev, { posicao: proximaPosicao, pontos: 0 }]);
+      fields.length > 0
+        ? Math.max(...fields.map((f) => f.posicao)) + 1
+        : 1;
+    append({ posicao: proximaPosicao, pontos: 0 });
   }
 
-  function removerLinha(index: number) {
-    setLinhas((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function salvar() {
-    setError(null);
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
     startTransition(async () => {
-      const resultado = await salvarPosicoes(regraId, linhas);
+      const resultado = await salvarPosicoes(regraId, data.posicoes);
       if (resultado.error) {
-        setError(resultado.error);
+        setServerError(resultado.error);
       } else {
         setOpen(false);
         toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
       }
     });
-  }
+  });
 
   return (
-    <Dialog open={open} onOpenChange={abrir}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           <Button variant="outline" size="sm">
@@ -84,49 +93,41 @@ export function PosicoesEditorDialog({
             <DialogTitle>Posições — {regraNome}</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-2">
-            {linhas.map((linha, index) => (
-              <div key={index} className="flex items-end gap-2">
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor={`posicao-${index}`} className="text-xs">
+          <form onSubmit={onSubmit} className="flex flex-col gap-2">
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex items-end gap-2">
+                <Field>
+                  <FieldLabel htmlFor={`posicao-${index}`} className="text-xs">
                     Posição
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id={`posicao-${index}`}
                     type="number"
                     min={1}
                     className="w-20"
-                    value={linha.posicao}
-                    onChange={(e) =>
-                      atualizarLinha(index, {
-                        posicao: Number(e.target.value),
-                      })
-                    }
+                    {...register(`posicoes.${index}.posicao`, { valueAsNumber: true })}
                   />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor={`pontos-${index}`} className="text-xs">
+                  <FieldError errors={[errors.posicoes?.[index]?.posicao]} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor={`pontos-${index}`} className="text-xs">
                     Pontos
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id={`pontos-${index}`}
                     type="number"
                     min={0}
                     className="w-24"
-                    value={linha.pontos}
-                    onChange={(e) =>
-                      atualizarLinha(index, {
-                        pontos: Number(e.target.value),
-                      })
-                    }
+                    {...register(`posicoes.${index}.pontos`, { valueAsNumber: true })}
                   />
-                </div>
+                  <FieldError errors={[errors.posicoes?.[index]?.pontos]} />
+                </Field>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Remover posição ${linha.posicao}`}
-                  onClick={() => removerLinha(index)}
+                  aria-label={`Remover posição ${field.posicao}`}
+                  onClick={() => remove(index)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -143,20 +144,26 @@ export function PosicoesEditorDialog({
               <Plus className="size-4" />
               Adicionar posição
             </Button>
-          </div>
 
-          {error && (
-            <p role="alert" className="text-sm font-medium text-destructive">
-              {error}
-            </p>
-          )}
+            {(errors.posicoes?.message ?? errors.posicoes?.root?.message) && (
+              <p role="alert" className="text-sm font-medium text-destructive">
+                {errors.posicoes.message ?? errors.posicoes.root?.message}
+              </p>
+            )}
 
-          <DialogFooter>
-            <Button type="button" onClick={salvar} disabled={isPending}>
-              {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              Salvar
-            </Button>
-          </DialogFooter>
+            {serverError && (
+              <p role="alert" className="text-sm font-medium text-destructive">
+                {serverError}
+              </p>
+            )}
+
+            <DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       )}
     </Dialog>

@@ -193,7 +193,9 @@ Pedidos avulsos de UI, à parte dos achados das duas auditorias — mesma lógic
 
 **Escopo**: pedido é só para o módulo de Atletas (o único campo de data em formulário hoje é `dataNascimento`) — não mexer em `competicao-form-dialog.tsx` (campo `data` da competição) a menos que peça depois.
 
-### G2. [Opcional] Migrar formulários para React Hook Form + Zod
+### G2. Migrar formulários para React Hook Form + Zod
+
+**Decisão (pós-G1)**: o usuário optou por seguir com a migração mesmo sabendo que não é estritamente necessária — deixa de ser opcional. Escopo: os 8 `*-form-dialog.tsx` (clube, circuito, categoria, prova, atleta, regra, tipo-competicao, competicao) **e também** `posicoes-editor-dialog.tsx` (estrutura diferente — array dinâmico sem `FormData`/Zod hoje; ganha um schema novo só para ele). As Server Actions de criar/editar passam a receber o dado já tipado e validado pelo `zodResolver` (não mais `FormData`), reaproveitando os schemas existentes em `lib/validations.ts`; `hooks/use-close-on-success.ts` é removido por ficar morto (dependia do `useActionState`, que sai de cena nesses formulários).
 
 **Motivação levantada pelo usuário**: os componentes do shadcn "performariam melhor" com RHF + Zod.
 

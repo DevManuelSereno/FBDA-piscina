@@ -2,28 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { provaSchema } from "@/lib/validations";
+import { provaSchema, type ProvaInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseProvaForm(formData: FormData) {
-  return provaSchema.safeParse({
-    nome: formData.get("nome"),
-    estilo: formData.get("estilo"),
-    distancia: formData.get("distancia"),
-    piscina: formData.get("piscina"),
-  });
-}
-
-export async function createProva(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createProva(data: ProvaInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseProvaForm(formData);
+  const parsed = provaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -44,13 +32,12 @@ export async function createProva(
 
 export async function updateProva(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: ProvaInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseProvaForm(formData);
+  const parsed = provaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

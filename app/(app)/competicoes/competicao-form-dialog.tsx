@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -14,8 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import type { ActionResult } from "@/lib/action-result";
+import { competicaoSchema, type CompeticaoInput } from "@/lib/validations";
 import { createCompeticao, updateCompeticao } from "./actions";
 
 type Competicao = {
@@ -34,25 +36,62 @@ type CompeticaoFormDialogProps = (
   tipos: { id: string; nome: string; circuitoNome: string }[];
 };
 
-const initialState: ActionResult = {};
-
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
 export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const action =
-    props.mode === "create"
-      ? createCompeticao
-      : updateCompeticao.bind(null, props.competicao.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const competicao = props.mode === "edit" ? props.competicao : undefined;
 
+  const defaultValues: CompeticaoInput = {
+    tipoCompeticaoId: competicao?.tipoCompeticaoId ?? "",
+    nome: competicao?.nome ?? "",
+    data: competicao?.data ?? new Date(),
+    temporada: competicao?.temporada ?? "",
+    local: competicao?.local ?? "",
+  };
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CompeticaoInput>({
+    resolver: zodResolver(competicaoSchema),
+    defaultValues,
+  });
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado =
+        props.mode === "create"
+          ? await createCompeticao(data)
+          : await updateCompeticao(props.competicao.id, data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           props.mode === "create" ? (
@@ -78,15 +117,10 @@ export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
               {props.mode === "create" ? "Nova competição" : "Editar competição"}
             </DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="tipoCompeticaoId">Tipo de competição</Label>
-              <NativeSelect
-                id="tipoCompeticaoId"
-                name="tipoCompeticaoId"
-                defaultValue={competicao?.tipoCompeticaoId ?? ""}
-                required
-              >
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="tipoCompeticaoId">Tipo de competição</FieldLabel>
+              <NativeSelect id="tipoCompeticaoId" {...register("tipoCompeticaoId")}>
                 <option value="" disabled>
                   Selecione um tipo
                 </option>
@@ -96,48 +130,47 @@ export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
                   </option>
                 ))}
               </NativeSelect>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                name="nome"
-                defaultValue={competicao?.nome}
-                required
-                minLength={2}
-              />
-            </div>
+              <FieldError errors={[errors.tipoCompeticaoId]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
+              <Input id="nome" {...register("nome")} />
+              <FieldError errors={[errors.nome]} />
+            </Field>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="data">Data</Label>
-                <Input
-                  id="data"
+              <Field>
+                <FieldLabel htmlFor="data">Data</FieldLabel>
+                <Controller
+                  control={control}
                   name="data"
-                  type="date"
-                  defaultValue={
-                    competicao ? toDateInputValue(competicao.data) : undefined
-                  }
-                  required
+                  render={({ field }) => (
+                    <Input
+                      id="data"
+                      type="date"
+                      value={toDateInputValue(field.value)}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? new Date(e.target.value) : null)
+                      }
+                    />
+                  )}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="temporada">Temporada</Label>
-                <Input
-                  id="temporada"
-                  name="temporada"
-                  defaultValue={competicao?.temporada ?? ""}
-                  placeholder="Ex.: 2026"
-                />
-              </div>
+                <FieldError errors={[errors.data]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="temporada">Temporada</FieldLabel>
+                <Input id="temporada" placeholder="Ex.: 2026" {...register("temporada")} />
+                <FieldError errors={[errors.temporada]} />
+              </Field>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="local">Local</Label>
-              <Input id="local" name="local" defaultValue={competicao?.local ?? ""} />
-            </div>
+            <Field>
+              <FieldLabel htmlFor="local">Local</FieldLabel>
+              <Input id="local" {...register("local")} />
+              <FieldError errors={[errors.local]} />
+            </Field>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 

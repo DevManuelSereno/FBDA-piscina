@@ -2,28 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { competicaoSchema } from "@/lib/validations";
+import { competicaoSchema, type CompeticaoInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseCompeticaoForm(formData: FormData) {
-  return competicaoSchema.safeParse({
-    nome: formData.get("nome"),
-    data: formData.get("data"),
-    local: formData.get("local"),
-    temporada: formData.get("temporada"),
-    tipoCompeticaoId: formData.get("tipoCompeticaoId"),
-  });
-}
-
-export async function createCompeticao(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createCompeticao(data: CompeticaoInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCompeticaoForm(formData);
+  const parsed = competicaoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -35,13 +22,12 @@ export async function createCompeticao(
 
 export async function updateCompeticao(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: CompeticaoInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCompeticaoForm(formData);
+  const parsed = competicaoSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

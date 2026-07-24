@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -14,10 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { METODO_PONTUACAO } from "@/lib/validations";
+import { METODO_PONTUACAO, tipoCompeticaoSchema, type TipoCompeticaoInput } from "@/lib/validations";
 import { GRUPOS_RELATORIO } from "@/lib/relatorio-matriz";
-import type { ActionResult } from "@/lib/action-result";
 import { createTipoCompeticao, updateTipoCompeticao } from "./actions";
 
 type TipoCompeticao = {
@@ -38,22 +39,61 @@ type TipoCompeticaoFormDialogProps = (
   regras: { id: string; nome: string }[];
 };
 
-const initialState: ActionResult = {};
-
 export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const action =
-    props.mode === "create"
-      ? createTipoCompeticao
-      : updateTipoCompeticao.bind(null, props.tipo.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const tipo = props.mode === "edit" ? props.tipo : undefined;
-  const [metodo, setMetodo] = useState(tipo?.metodoPontuacao ?? "COLOCACAO");
+
+  const defaultValues: TipoCompeticaoInput = {
+    circuitoId: tipo?.circuitoId ?? "",
+    nome: tipo?.nome ?? "",
+    metodoPontuacao: (tipo?.metodoPontuacao as TipoCompeticaoInput["metodoPontuacao"]) ?? "COLOCACAO",
+    ordem: tipo?.ordem ?? 0,
+    regraPontuacaoId: tipo?.regraPontuacaoId ?? undefined,
+    grupoRelatorio: (tipo?.grupoRelatorio as TipoCompeticaoInput["grupoRelatorio"]) ?? GRUPOS_RELATORIO[0].value,
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<TipoCompeticaoInput>({
+    resolver: zodResolver(tipoCompeticaoSchema),
+    defaultValues,
+  });
+
+  const metodo = watch("metodoPontuacao");
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado =
+        props.mode === "create"
+          ? await createTipoCompeticao(data)
+          : await updateTipoCompeticao(props.tipo.id, data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           props.mode === "create" ? (
@@ -81,15 +121,10 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
                 : "Editar tipo de competição"}
             </DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="circuitoId">Circuito</Label>
-              <NativeSelect
-                id="circuitoId"
-                name="circuitoId"
-                defaultValue={tipo?.circuitoId ?? ""}
-                required
-              >
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="circuitoId">Circuito</FieldLabel>
+              <NativeSelect id="circuitoId" {...register("circuitoId")}>
                 <option value="" disabled>
                   Selecione um circuito
                 </option>
@@ -99,55 +134,44 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
                   </option>
                 ))}
               </NativeSelect>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
+              <FieldError errors={[errors.circuitoId]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
               <Input
                 id="nome"
-                name="nome"
                 placeholder="Ex.: Concurso, Regional, Fita Azul"
-                defaultValue={tipo?.nome}
-                required
-                minLength={2}
+                {...register("nome")}
               />
-            </div>
+              <FieldError errors={[errors.nome]} />
+            </Field>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="metodoPontuacao">Método de pontuação</Label>
-                <NativeSelect
-                  id="metodoPontuacao"
-                  name="metodoPontuacao"
-                  value={metodo}
-                  onChange={(e) => setMetodo(e.target.value)}
-                >
+              <Field>
+                <FieldLabel htmlFor="metodoPontuacao">Método de pontuação</FieldLabel>
+                <NativeSelect id="metodoPontuacao" {...register("metodoPontuacao")}>
                   {METODO_PONTUACAO.map((m) => (
                     <option key={m} value={m}>
                       {m === "COLOCACAO" ? "Por colocação" : "Manual"}
                     </option>
                   ))}
                 </NativeSelect>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="ordem">Ordem</Label>
+                <FieldError errors={[errors.metodoPontuacao]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="ordem">Ordem</FieldLabel>
                 <Input
                   id="ordem"
-                  name="ordem"
                   type="number"
                   min={0}
-                  defaultValue={tipo?.ordem ?? 0}
-                  required
+                  {...register("ordem", { valueAsNumber: true })}
                 />
-              </div>
+                <FieldError errors={[errors.ordem]} />
+              </Field>
             </div>
             {metodo === "COLOCACAO" && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="regraPontuacaoId">Regra de pontuação</Label>
-                <NativeSelect
-                  id="regraPontuacaoId"
-                  name="regraPontuacaoId"
-                  defaultValue={tipo?.regraPontuacaoId ?? ""}
-                  required
-                >
+              <Field>
+                <FieldLabel htmlFor="regraPontuacaoId">Regra de pontuação</FieldLabel>
+                <NativeSelect id="regraPontuacaoId" {...register("regraPontuacaoId")}>
                   <option value="" disabled>
                     Selecione uma regra
                   </option>
@@ -157,16 +181,12 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
                     </option>
                   ))}
                 </NativeSelect>
-              </div>
+                <FieldError errors={[errors.regraPontuacaoId]} />
+              </Field>
             )}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="grupoRelatorio">Grupo no relatório</Label>
-              <NativeSelect
-                id="grupoRelatorio"
-                name="grupoRelatorio"
-                defaultValue={tipo?.grupoRelatorio ?? ""}
-                required
-              >
+            <Field>
+              <FieldLabel htmlFor="grupoRelatorio">Grupo no relatório</FieldLabel>
+              <NativeSelect id="grupoRelatorio" {...register("grupoRelatorio")}>
                 <option value="" disabled>
                   Selecione um grupo
                 </option>
@@ -176,11 +196,12 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
                   </option>
                 ))}
               </NativeSelect>
-            </div>
+              <FieldError errors={[errors.grupoRelatorio]} />
+            </Field>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 

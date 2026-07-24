@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -14,9 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { ESTILO_PROVA, PISCINA } from "@/lib/validations";
-import type { ActionResult } from "@/lib/action-result";
+import { ESTILO_PROVA, PISCINA, provaSchema, type ProvaInput } from "@/lib/validations";
 import { createProva, updateProva } from "./actions";
 
 type Prova = {
@@ -29,19 +30,56 @@ type Prova = {
 
 type ProvaFormDialogProps = { mode: "create" } | { mode: "edit"; prova: Prova };
 
-const initialState: ActionResult = {};
-
 export function ProvaFormDialog(props: ProvaFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const action =
-    props.mode === "create" ? createProva : updateProva.bind(null, props.prova.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const prova = props.mode === "edit" ? props.prova : undefined;
 
+  const defaultValues: ProvaInput = {
+    nome: prova?.nome ?? "",
+    estilo: (prova?.estilo as ProvaInput["estilo"]) ?? ESTILO_PROVA[0],
+    distancia: prova?.distancia ?? 0,
+    piscina: (prova?.piscina as ProvaInput["piscina"]) ?? PISCINA[0],
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProvaInput>({
+    resolver: zodResolver(provaSchema),
+    defaultValues,
+  });
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado =
+        props.mode === "create"
+          ? await createProva(data)
+          : await updateProva(props.prova.id, data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           props.mode === "create" ? (
@@ -67,63 +105,50 @@ export function ProvaFormDialog(props: ProvaFormDialogProps) {
               {props.mode === "create" ? "Nova prova" : "Editar prova"}
             </DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                name="nome"
-                defaultValue={prova?.nome}
-                required
-                minLength={2}
-                placeholder="Ex.: 100m Livre"
-              />
-            </div>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
+              <Input id="nome" placeholder="Ex.: 100m Livre" {...register("nome")} />
+              <FieldError errors={[errors.nome]} />
+            </Field>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="estilo">Estilo</Label>
-                <NativeSelect
-                  id="estilo"
-                  name="estilo"
-                  defaultValue={prova?.estilo ?? ESTILO_PROVA[0]}
-                >
+              <Field>
+                <FieldLabel htmlFor="estilo">Estilo</FieldLabel>
+                <NativeSelect id="estilo" {...register("estilo")}>
                   {ESTILO_PROVA.map((estilo) => (
                     <option key={estilo} value={estilo}>
                       {estilo}
                     </option>
                   ))}
                 </NativeSelect>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="distancia">Distância (m)</Label>
+                <FieldError errors={[errors.estilo]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="distancia">Distância (m)</FieldLabel>
                 <Input
                   id="distancia"
-                  name="distancia"
                   type="number"
                   min={1}
-                  defaultValue={prova?.distancia}
-                  required
+                  {...register("distancia", { valueAsNumber: true })}
                 />
-              </div>
+                <FieldError errors={[errors.distancia]} />
+              </Field>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="piscina">Piscina</Label>
-              <NativeSelect
-                id="piscina"
-                name="piscina"
-                defaultValue={prova?.piscina ?? PISCINA[0]}
-              >
+            <Field>
+              <FieldLabel htmlFor="piscina">Piscina</FieldLabel>
+              <NativeSelect id="piscina" {...register("piscina")}>
                 {PISCINA.map((piscina) => (
                   <option key={piscina} value={piscina}>
                     {piscina}
                   </option>
                 ))}
               </NativeSelect>
-            </div>
+              <FieldError errors={[errors.piscina]} />
+            </Field>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 

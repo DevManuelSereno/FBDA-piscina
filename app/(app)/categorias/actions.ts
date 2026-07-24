@@ -2,31 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { categoriaSchema } from "@/lib/validations";
+import { categoriaSchema, type CategoriaInput } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth-guard";
 import { isUniqueConstraintError } from "@/lib/prisma-errors";
 import type { ActionResult } from "@/lib/action-result";
 
-function parseCategoriaForm(formData: FormData) {
-  return categoriaSchema.safeParse({
-    nome: formData.get("nome"),
-    sexo: formData.get("sexo"),
-    idadeMin: formData.get("idadeMin"),
-    idadeMax: formData.get("idadeMax"),
-    circuitoId: formData.get("circuitoId"),
-    ordem: formData.get("ordem"),
-    autoClassificavel: formData.get("autoClassificavel") === "on",
-  });
-}
-
-export async function createCategoria(
-  _prevState: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+export async function createCategoria(data: CategoriaInput): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCategoriaForm(formData);
+  const parsed = categoriaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
@@ -47,13 +32,12 @@ export async function createCategoria(
 
 export async function updateCategoria(
   id: string,
-  _prevState: ActionResult,
-  formData: FormData,
+  data: CategoriaInput,
 ): Promise<ActionResult> {
   const authError = await requireAuth();
   if (authError) return authError;
 
-  const parsed = parseCategoriaForm(formData);
+  const parsed = categoriaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }

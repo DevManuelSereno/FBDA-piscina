@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -14,9 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
-import { SEXO_CATEGORIA } from "@/lib/validations";
-import type { ActionResult } from "@/lib/action-result";
+import { SEXO_CATEGORIA, categoriaSchema, type CategoriaInput } from "@/lib/validations";
 import { createCategoria, updateCategoria } from "./actions";
 
 type Categoria = {
@@ -37,21 +38,59 @@ type CategoriaFormDialogProps = (
   circuitos: { id: string; nome: string }[];
 };
 
-const initialState: ActionResult = {};
-
 export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const action =
-    props.mode === "create"
-      ? createCategoria
-      : updateCategoria.bind(null, props.categoria.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  useCloseOnSuccess(state, setOpen);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const categoria = props.mode === "edit" ? props.categoria : undefined;
 
+  const defaultValues: CategoriaInput = {
+    circuitoId: categoria?.circuitoId ?? "",
+    nome: categoria?.nome ?? "",
+    sexo: (categoria?.sexo as CategoriaInput["sexo"]) ?? "M",
+    ordem: categoria?.ordem ?? 0,
+    idadeMin: categoria?.idadeMin ?? 0,
+    idadeMax: categoria?.idadeMax ?? 0,
+    autoClassificavel: categoria?.autoClassificavel ?? true,
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CategoriaInput>({
+    resolver: zodResolver(categoriaSchema),
+    defaultValues,
+  });
+
+  function onOpenChange(novoOpen: boolean) {
+    if (novoOpen) {
+      reset(defaultValues);
+      setServerError(null);
+    }
+    setOpen(novoOpen);
+  }
+
+  const onSubmit = handleSubmit((data) => {
+    setServerError(null);
+    startTransition(async () => {
+      const resultado =
+        props.mode === "create"
+          ? await createCategoria(data)
+          : await updateCategoria(props.categoria.id, data);
+      if (resultado.error) {
+        setServerError(resultado.error);
+      } else {
+        setOpen(false);
+        toast.success(resultado.mensagemSucesso ?? "Salvo com sucesso.");
+      }
+    });
+  });
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
           props.mode === "create" ? (
@@ -77,15 +116,10 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
               {props.mode === "create" ? "Nova categoria" : "Editar categoria"}
             </DialogTitle>
           </DialogHeader>
-          <form action={formAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="circuitoId">Circuito</Label>
-              <NativeSelect
-                id="circuitoId"
-                name="circuitoId"
-                defaultValue={categoria?.circuitoId ?? ""}
-                required
-              >
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="circuitoId">Circuito</FieldLabel>
+              <NativeSelect id="circuitoId" {...register("circuitoId")}>
                 <option value="" disabled>
                   Selecione um circuito
                 </option>
@@ -95,74 +129,63 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
                   </option>
                 ))}
               </NativeSelect>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                name="nome"
-                defaultValue={categoria?.nome}
-                required
-                minLength={2}
-              />
-            </div>
+              <FieldError errors={[errors.circuitoId]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="nome">Nome</FieldLabel>
+              <Input id="nome" {...register("nome")} />
+              <FieldError errors={[errors.nome]} />
+            </Field>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="sexo">Sexo</Label>
-                <NativeSelect
-                  id="sexo"
-                  name="sexo"
-                  defaultValue={categoria?.sexo ?? "M"}
-                >
+              <Field>
+                <FieldLabel htmlFor="sexo">Sexo</FieldLabel>
+                <NativeSelect id="sexo" {...register("sexo")}>
                   {SEXO_CATEGORIA.map((sexo) => (
                     <option key={sexo} value={sexo}>
                       {sexo}
                     </option>
                   ))}
                 </NativeSelect>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="ordem">Ordem</Label>
+                <FieldError errors={[errors.sexo]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="ordem">Ordem</FieldLabel>
                 <Input
                   id="ordem"
-                  name="ordem"
                   type="number"
                   min={0}
-                  defaultValue={categoria?.ordem ?? 0}
-                  required
+                  {...register("ordem", { valueAsNumber: true })}
                 />
-              </div>
+                <FieldError errors={[errors.ordem]} />
+              </Field>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="idadeMin">Idade mínima</Label>
+              <Field>
+                <FieldLabel htmlFor="idadeMin">Idade mínima</FieldLabel>
                 <Input
                   id="idadeMin"
-                  name="idadeMin"
                   type="number"
                   min={0}
-                  defaultValue={categoria?.idadeMin}
-                  required
+                  {...register("idadeMin", { valueAsNumber: true })}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="idadeMax">Idade máxima</Label>
+                <FieldError errors={[errors.idadeMin]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="idadeMax">Idade máxima</FieldLabel>
                 <Input
                   id="idadeMax"
-                  name="idadeMax"
                   type="number"
                   min={0}
-                  defaultValue={categoria?.idadeMax}
-                  required
+                  {...register("idadeMax", { valueAsNumber: true })}
                 />
-              </div>
+                <FieldError errors={[errors.idadeMax]} />
+              </Field>
             </div>
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                name="autoClassificavel"
-                defaultChecked={categoria?.autoClassificavel ?? true}
                 className="size-4 cursor-pointer rounded border-input"
+                {...register("autoClassificavel")}
               />
               Classificar atletas automaticamente por idade
             </label>
@@ -171,9 +194,9 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
               atribuição não segue apenas a faixa etária.
             </p>
 
-            {state.error && (
+            {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">
-                {state.error}
+                {serverError}
               </p>
             )}
 
