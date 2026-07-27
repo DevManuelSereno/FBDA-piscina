@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { CalendarIcon, Loader2, Pencil, Plus, XIcon } from "lucide-react";
+import { CalendarIcon, Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,8 +21,6 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -68,11 +65,85 @@ function parseDataPtBr(value: string): Date | undefined {
   return data;
 }
 
+// Dropdown de calendário feito com React puro — SEM Popover/Dialog do Base UI.
+// Motivo: nesta stack (Next 16 Turbopack + React 19.2 + @base-ui/react 1.6.0)
+// os primitivos flutuantes do Base UI (Popover/Menu/Dialog) têm bugs de
+// abertura/fechamento já documentados em docs/decisions.md — o mesmo código
+// de exemplo do shadcn funciona no site deles porque lá o Popover é sobre
+// Radix, não Base UI. Um dropdown controlado por estado + um listener manual
+// de clique-fora é muito mais tolerante: só fecha quando há um pointerdown
+// realmente FORA do dropdown, então nunca briga com o <select> nativo de
+// mês/ano do Calendar (cujo dropdown do SO não gera pointerdown na página).
+function CalendarioDropdown({
+  value,
+  onSelect,
+}: {
+  value: Date | undefined;
+  onSelect: (date: Date) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!aberto) return;
+
+    function aoApontar(e: PointerEvent) {
+      // Só fecha se o alvo estiver realmente fora do dropdown (o próprio
+      // botão e o Calendar, incluindo os <select> de mês/ano, ficam dentro
+      // de wrapRef, então clicar neles nunca fecha).
+      if (wrapRef.current?.contains(e.target as Node)) return;
+      setAberto(false);
+    }
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === "Escape") setAberto(false);
+    }
+
+    document.addEventListener("pointerdown", aoApontar);
+    document.addEventListener("keydown", aoTeclar);
+    return () => {
+      document.removeEventListener("pointerdown", aoApontar);
+      document.removeEventListener("keydown", aoTeclar);
+    };
+  }, [aberto]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <InputGroupButton
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-label="Abrir calendário"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+      >
+        <CalendarIcon className="size-4" aria-hidden="true" />
+      </InputGroupButton>
+      {aberto && (
+        <div
+          role="dialog"
+          aria-label="Selecionar data de nascimento"
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 rounded-lg bg-popover p-2 shadow-md ring-1 ring-foreground/10"
+        >
+          <Calendar
+            mode="single"
+            selected={value}
+            captionLayout="dropdown"
+            onSelect={(date) => {
+              if (!date) return;
+              onSelect(date);
+              setAberto(false);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AtletaFormDialog(props: AtletaFormDialogProps) {
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [calendarioAberto, setCalendarioAberto] = useState(false);
 
   const atleta = props.mode === "edit" ? props.atleta : undefined;
 
@@ -183,65 +254,13 @@ export function AtletaFormDialog(props: AtletaFormDialogProps) {
                         }}
                       />
                       <InputGroupAddon align="inline-end">
-                        {/* O <select> nativo de mês/ano do Calendar não abre
-                            de forma confiável quando um ancestral usa
-                            `transform` CSS (é um bug cross-browser conhecido:
-                            navegadores posicionam o dropdown nativo em relação
-                            ao espaço de coordenadas transformado, e o popup
-                            pode falhar ao abrir ou fechar instantaneamente).
-                            O DialogContent padrão do projeto centraliza via
-                            `-translate-x-1/2 -translate-y-1/2`, então trocar
-                            de Popover para Dialog sozinho não resolvia — o
-                            usuário confirmou por vídeo que o bug persistia.
-                            Aqui montamos o popup manualmente com os
-                            primitivos do Base UI, centralizando por flexbox
-                            (sem transform) especificamente para este
-                            calendário aninhado. */}
-                        <Dialog open={calendarioAberto} onOpenChange={setCalendarioAberto}>
-                          <DialogTrigger
-                            render={
-                              <InputGroupButton
-                                variant="ghost"
-                                size="icon-xs"
-                                aria-label="Abrir calendário"
-                              >
-                                <CalendarIcon className="size-4" aria-hidden="true" />
-                              </InputGroupButton>
-                            }
-                          />
-                          {calendarioAberto && (
-                            <DialogPortal>
-                              <DialogOverlay />
-                              <DialogPrimitive.Popup
-                                data-slot="dialog-content"
-                                className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
-                              >
-                                <div className="flex flex-col gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10">
-                                  <div className="flex items-center justify-between gap-4">
-                                    <DialogTitle>Data de nascimento</DialogTitle>
-                                    <DialogPrimitive.Close
-                                      render={<Button variant="ghost" size="icon-sm" />}
-                                    >
-                                      <XIcon />
-                                      <span className="sr-only">Fechar</span>
-                                    </DialogPrimitive.Close>
-                                  </div>
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    captionLayout="dropdown"
-                                    onSelect={(date) => {
-                                      if (!date) return;
-                                      field.onChange(date);
-                                      setDataNascimentoTexto(formatDataPtBr(date));
-                                      setCalendarioAberto(false);
-                                    }}
-                                  />
-                                </div>
-                              </DialogPrimitive.Popup>
-                            </DialogPortal>
-                          )}
-                        </Dialog>
+                        <CalendarioDropdown
+                          value={field.value}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setDataNascimentoTexto(formatDataPtBr(date));
+                          }}
+                        />
                       </InputGroupAddon>
                     </InputGroup>
                   )}
