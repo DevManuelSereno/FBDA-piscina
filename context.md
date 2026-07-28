@@ -378,3 +378,66 @@ npx prisma studio     # inspecionar o banco
 ```
 
 **Login de teste (seed):** `admin@fbda.local` / `piscina123`.
+
+---
+
+# PARTE 11 — Achados dos regulamentos oficiais 2026 (análise, planejamento pendente)
+
+**Fonte:** dois PDFs adicionados pelo cliente em `extras/` — `REGULAMENTO GERAL DE COMPETIÇÕES 2026 CORRIGIDO 26.03.2026.pdf` (Concursos/Troféus/Campeonatos/Festivais/Copa, circuito "Infantil a Sênior" e classes mais jovens) e `Regulamento Concursos e Campeonatos Master 2026 - finalizado.pdf` (circuito Master). Lidos e analisados integralmente; **nenhuma mudança de código foi feita ainda** — esta seção é só o levantamento, para virar plano de implementação numa sessão futura.
+
+## Confirmações do que já estava certo
+
+- **Cálculo de idade "por ano civil"** (`lib/categoria.ts#calcularIdadeNoAno` — diferença de ano-calendário, não data exata) é exatamente o critério exigido pelo Regulamento Master (Art. 5º, §1º: idade em 31/12 do ano). Decisão de engenharia já tomada antes, agora respaldada por texto oficial — não precisa mudar.
+- Classes do circuito "Infantil a Sênior" (INF1, INF2, JV1, JV2, J1, J2, SR) batem com o Regulamento Geral (Art. 2º, §2º).
+
+## 🔴 Discrepância confirmada no seed do Master (`prisma/seed.ts`)
+
+O Regulamento Master (Art. 5º) lista 16 classes por sexo, de Pré-Master a 95+. Comparado ao seed atual:
+
+| Regulamento oficial | Seed atual (`prisma/seed.ts`, linhas ~82-98) |
+|---|---|
+| PRÉ-MASTER: **20 a 24 anos** | `PRE`: **18 a 24 anos** ❌ |
+| 25+ até **95+** (16 classes, faixas de 5 anos, até 99) | Só vai até **75+** (banda `[25,30,...,75]`, última banda absorve 75-99 num grupo só) ❌ |
+
+**Faltam as classes 80+, 85+, 90+ e 95+** — hoje qualquer atleta Master com 76+ anos é classificado genericamente como "75+". `PRE` também está com o piso errado.
+
+## 🆕 Conceitos novos, ainda não modelados no schema
+
+1. **Classes mais jovens** (Regulamento Geral, Art. 2º §1º): Pingo-Mirim, Mini-Mirim, Pré-Mirim, Mirim 1, Mirim 2, Petiz 1, Petiz 2 — não existem em nenhum circuito/categoria do schema atual. Não fica claro nos regulamentos se são um circuito próprio ou categorias adicionais dentro de "Infantil a Sênior" — **precisa confirmação da FBDA**.
+
+2. **Pontuação por colocação varia por local da competição** (Regulamento Geral, Art. 15º, §1º/§2º): Concursos em Salvador usam uma escala (25,20,17,15,13,11,10,9,8,7,6,5,4,3,2,1 para 16 colocações); fora de Salvador usam outra (30,25,20,18,16,13,12,11,9,8,7,6,5,4,3,2). O schema hoje (`RegraPontuacao`/`PontuacaoPosicao`) não tem noção de "local" afetando a regra — um único `TipoCompeticao` aponta para uma única `RegraPontuacao`.
+
+3. **Bônus de recorde somado à pontuação de colocação** — não modelado hoje:
+   - Regulamento Geral: Recorde Baiano de Classe = 10, Recorde Baiano Absoluto = 20, Recorde Brasileiro Absoluto = 60, Recorde Sul-Americano Absoluto = 70.
+   - Regulamento Master: Recorde Baiano = 10, Recorde Brasileiro = 25, Recorde Sul-Americano = 50, Recorde Mundial = 100.
+   - Valores diferentes entre os dois regulamentos — não é a mesma tabela reaproveitada.
+
+4. **Revezamento pontua em dobro** (ambos os regulamentos) — não verificado se o app já contempla resultados de revezamento em algum lugar (não encontrado nada em `Resultado`/`PontuacaoCompeticao` relacionado a equipes/revezamento durante esta análise).
+
+5. **"Melhores do Ano"** (Regulamento Geral, Art. 28º/29º) — ranking de temporada inteira, separado do ranking por competição, com escalas de pontos próprias por categoria de competição:
+   - Concursos: 5-4-3-2-1 (1º a 5º)
+   - Campeonato Baiano/Troféu FBDA: 15-12-9-6-3
+   - Regionais (Troféu Walter Junior e outros): 30-24-18-12-6
+   - Nacionais CBI: 60-48-36-24-12
+   - Nacionais Absoluto: 100-80-60-40-20
+   - Mais bônus de recorde (Baiano=20, Brasileiro=50 nesse contexto específico).
+   - **Feature nova** — `lib/ranking.ts` hoje não agrega por "tipo de competição ao longo da temporada" dessa forma.
+
+6. **"Eficiência por clube"** (Regulamento Master, Art. 9º) — métrica com matemática diferente do ranking coletivo atual: **soma de pontos do clube ÷ quantidade de atletas inscritos** (média, não soma). O ranking coletivo hoje (`lib/ranking.ts`) só soma pontos de todos os atletas do clube.
+
+7. **Limites de inscrição por atleta** (ex.: Master permite 2 provas individuais em Concurso, 4 em Campeonato com máx. 2/etapa; jovens têm limites parecidos por classe no Regulamento Geral, Art. 12º) — só seria relevante se uma tela de "inscrição prévia" for construída (hoje o app só lança resultado, não gerencia inscrição antes da competição).
+
+## O que continua sem resposta
+
+- **Índice Técnico**: ambos os regulamentos mencionam premiação por Índice Técnico, mas remetem a uma "tabela em vigor organizada pela Diretoria Técnica da CBDA" — tabela externa, não incluída em nenhum dos dois PDFs. A fórmula continua desconhecida; o gap já documentado (`metodoPontuacao="TEMPO"` não implementado) permanece sem solução.
+- O PDF do Master tem trechos **destacados em amarelo e sem os valores preenchidos** (4º/5º lugar em Campeonatos, parte de "Eficiência por clube") — sinal de que o próprio documento oficial está incompleto/em rascunho nesses pontos específicos. Não assumir valores; confirmar com a FBDA antes de codificar.
+
+## Decisões que precisam de confirmação da FBDA antes de implementar
+
+Nenhum destes itens deve ser implementado apenas com base na leitura dos PDFs — todos envolvem mudança de schema ou feature nova, e merecem confirmação explícita do cliente antes:
+
+1. Corrigir `PRE` (18→20 anos de piso) e adicionar as classes 80+/85+/90+/95+ no circuito Master.
+2. Decidir onde entram as classes Pingo-Mirim a Petiz 2 (circuito novo? categorias em "Infantil a Sênior"?).
+3. Se/como modelar pontuação dependente do local da competição (Salvador vs. fora).
+4. Se/como modelar bônus de recorde.
+5. Se "Melhores do Ano" e "Eficiência por clube" entram no escopo do projeto agora ou ficam para uma fase futura (são features novas, não ajustes).

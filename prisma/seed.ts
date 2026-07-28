@@ -58,28 +58,47 @@ async function main() {
   // nascimento — por isso os cortes de idade abaixo são PLACEHOLDER,
   // ainda não confirmados pela FBDA. Ajustar assim que o cliente informar
   // os cortes oficiais (ver docs/decisions.md).
+  //
+  // Classes mais jovens (Pingo-Mirim a Petiz 2): confirmadas pelo
+  // Regulamento Geral de Competições 2026 (Art. 2º, §1º/§2º) como parte do
+  // mesmo circuito/troféu das classes acima (Walter Figueiredo Silva
+  // Junior cobre as duas faixas etárias juntas). O regulamento cita só os
+  // NOMES das classes — as idades exatas remetem a um "Boletim já expedido"
+  // da CBDA (Art. 7º) que não temos. Os cortes abaixo são PLACEHOLDER
+  // (sequenciais, 1 ano cada, terminando em Petiz 2 = 9 anos, um ano antes
+  // de INF1 começar aos 10) — precisam de confirmação da FBDA antes de usar
+  // em produção, exatamente como já valia para INF1-SR.
   const classesJovem: {
     nome: string;
     idadeMin: number;
     idadeMax: number;
     ordem: number;
   }[] = [
-    { nome: "INF1", idadeMin: 10, idadeMax: 11, ordem: 1 },
-    { nome: "INF2", idadeMin: 12, idadeMax: 13, ordem: 2 },
-    { nome: "JV1", idadeMin: 14, idadeMax: 14, ordem: 3 },
-    { nome: "JV2", idadeMin: 15, idadeMax: 15, ordem: 4 },
-    { nome: "J1", idadeMin: 16, idadeMax: 16, ordem: 5 },
-    { nome: "J2", idadeMin: 17, idadeMax: 17, ordem: 6 },
-    { nome: "SR", idadeMin: 18, idadeMax: 99, ordem: 7 },
+    { nome: "Pingo-Mirim", idadeMin: 0, idadeMax: 3, ordem: 1 },
+    { nome: "Mini-Mirim", idadeMin: 4, idadeMax: 4, ordem: 2 },
+    { nome: "Pré-Mirim", idadeMin: 5, idadeMax: 5, ordem: 3 },
+    { nome: "Mirim 1", idadeMin: 6, idadeMax: 6, ordem: 4 },
+    { nome: "Mirim 2", idadeMin: 7, idadeMax: 7, ordem: 5 },
+    { nome: "Petiz 1", idadeMin: 8, idadeMax: 8, ordem: 6 },
+    { nome: "Petiz 2", idadeMin: 9, idadeMax: 9, ordem: 7 },
+    { nome: "INF1", idadeMin: 10, idadeMax: 11, ordem: 8 },
+    { nome: "INF2", idadeMin: 12, idadeMax: 13, ordem: 9 },
+    { nome: "JV1", idadeMin: 14, idadeMax: 14, ordem: 10 },
+    { nome: "JV2", idadeMin: 15, idadeMax: 15, ordem: 11 },
+    { nome: "J1", idadeMin: 16, idadeMax: 16, ordem: 12 },
+    { nome: "J2", idadeMin: 17, idadeMax: 17, ordem: 13 },
+    { nome: "SR", idadeMin: 18, idadeMax: 99, ordem: 14 },
   ];
 
-  // Circuito "Master": as classes SÃO faixas etárias explícitas na planilha
-  // real (extras/Master - Masculino.xlsx) — 25+, 30+, ..., 75+ — não há
-  // invenção aqui. "PRE" e "PCD" também aparecem na planilha, mas não são
-  // faixas etárias (PRE = pré-master; PCD = pessoa com deficiência), por
-  // isso ficam com autoClassificavel=false (cadastradas, sem auto-atribuição
-  // por idade).
-  const bandasMaster = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
+  // Circuito "Master": classes confirmadas pelo Regulamento Concursos e
+  // Campeonatos Masters 2026 (extras/Regulamento Concursos e Campeonatos
+  // Master 2026 - finalizado.pdf, Art. 5º) — 16 classes por sexo, de
+  // Pré-Master (20-24) a 95+ (95-99). "PCD" também aparece no regulamento,
+  // mas não é faixa etária real: o próprio documento explica que a FBDA usa
+  // internamente uma classe "100+" com ano de nascimento ajustado para 1926
+  // só para viabilizar o processamento no sistema — mantido aqui como
+  // categoria não auto-classificável, sem inventar uma faixa etária.
+  const bandasMaster = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95];
   const classesMaster: {
     nome: string;
     idadeMin: number;
@@ -87,7 +106,7 @@ async function main() {
     ordem: number;
     autoClassificavel: boolean;
   }[] = [
-    { nome: "PRE", idadeMin: 18, idadeMax: 24, ordem: 0, autoClassificavel: false },
+    { nome: "PRE", idadeMin: 20, idadeMax: 24, ordem: 0, autoClassificavel: false },
     ...bandasMaster.map((min, index) => ({
       nome: `${min}+`,
       idadeMin: min,

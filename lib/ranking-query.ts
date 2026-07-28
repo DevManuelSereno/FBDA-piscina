@@ -1,8 +1,10 @@
 import { prisma } from "./db";
 import type { Prisma } from "./generated/prisma/client";
 import {
+  agregarEficienciaClube,
   agregarRankingColetivo,
   agregarRankingIndividual,
+  type EficienciaClubeItem,
   type RankingColetivoItem,
   type RankingIndividualItem,
 } from "./ranking";
@@ -20,6 +22,7 @@ export type FiltrosRankingQuery = {
 export async function buscarRanking(filtros: FiltrosRankingQuery): Promise<{
   individual: RankingIndividualItem[];
   coletivo: RankingColetivoItem[];
+  eficienciaClube: EficienciaClubeItem[];
 }> {
   // Fonte única do ranking: PontuacaoCompeticao (rollup por atleta x
   // competição), preenchida tanto para competições COLOCACAO (derivada de
@@ -67,5 +70,6 @@ export async function buscarRanking(filtros: FiltrosRankingQuery): Promise<{
   return {
     individual: agregarRankingIndividual(resultadosParaRanking),
     coletivo: agregarRankingColetivo(resultadosParaRanking),
+    eficienciaClube: agregarEficienciaClube(resultadosParaRanking),
   };
 }

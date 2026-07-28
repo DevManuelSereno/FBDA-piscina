@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   agregarRankingIndividual,
   agregarRankingColetivo,
+  agregarEficienciaClube,
   type ResultadoParaRanking,
 } from "./ranking";
 
@@ -98,5 +99,54 @@ describe("agregarRankingColetivo", () => {
       [1, 10],
       [3, 4],
     ]);
+  });
+});
+
+describe("agregarEficienciaClube", () => {
+  test("divide a soma de pontos do clube pela quantidade de atletas que pontuaram", () => {
+    const resultados: ResultadoParaRanking[] = [
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 10 },
+      { atletaId: "a2", atletaNome: "Bruno", clubeId: "c1", clubeNome: "Baía", pontos: 6 },
+      { atletaId: "a3", atletaNome: "Carla", clubeId: "c2", clubeNome: "Golfinhos", pontos: 10 },
+    ];
+
+    const ranking = agregarEficienciaClube(resultados);
+
+    expect(ranking).toEqual([
+      { posicao: 1, clubeId: "c2", clubeNome: "Golfinhos", pontos: 10, totalAtletas: 1 },
+      { posicao: 2, clubeId: "c1", clubeNome: "Baía", pontos: 8, totalAtletas: 2 },
+    ]);
+  });
+
+  test("clube com menos atletas mas maior média fica na frente de quem tem mais pontos brutos", () => {
+    // Baía: 3 atletas somando 21 pontos (média 7). Golfinhos: 1 atleta com 10
+    // pontos (média 10) — pontuação bruta menor, mas eficiência maior.
+    const resultados: ResultadoParaRanking[] = [
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 9 },
+      { atletaId: "a2", atletaNome: "Bruno", clubeId: "c1", clubeNome: "Baía", pontos: 7 },
+      { atletaId: "a3", atletaNome: "Carla", clubeId: "c1", clubeNome: "Baía", pontos: 5 },
+      { atletaId: "a4", atletaNome: "Daniel", clubeId: "c2", clubeNome: "Golfinhos", pontos: 10 },
+    ];
+
+    const ranking = agregarEficienciaClube(resultados);
+
+    expect(ranking.map((r) => r.clubeId)).toEqual(["c2", "c1"]);
+  });
+
+  test("soma múltiplos resultados do mesmo atleta sem contá-lo duas vezes na divisão", () => {
+    const resultados: ResultadoParaRanking[] = [
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 9 },
+      { atletaId: "a1", atletaNome: "Ana", clubeId: "c1", clubeNome: "Baía", pontos: 7 },
+    ];
+
+    const ranking = agregarEficienciaClube(resultados);
+
+    expect(ranking).toEqual([
+      { posicao: 1, clubeId: "c1", clubeNome: "Baía", pontos: 16, totalAtletas: 1 },
+    ]);
+  });
+
+  test("retorna lista vazia quando não há resultados", () => {
+    expect(agregarEficienciaClube([])).toEqual([]);
   });
 });

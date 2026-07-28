@@ -21,6 +21,14 @@ export type RankingColetivoItem = {
   pontos: number;
 };
 
+export type EficienciaClubeItem = {
+  posicao: number;
+  clubeId: string;
+  clubeNome: string;
+  pontos: number;
+  totalAtletas: number;
+};
+
 // Ranking "padrão de competição": itens empatados em pontos recebem a
 // mesma posição, e a próxima posição pula o número de itens empatados
 // (ex.: 1, 1, 3, 4 — não 1, 1, 2, 3). Assume `itens` já ordenado por
@@ -84,5 +92,43 @@ export function agregarRankingColetivo(
   }
 
   const ordenado = [...mapa.values()].sort((a, b) => b.pontos - a.pontos);
+  return atribuirPosicoes(ordenado);
+}
+
+// "Eficiência por clube" (Regulamento Master, Art. 9º): soma de pontos do
+// clube dividida pela quantidade de atletas que pontuaram — uma média, não
+// a soma que agregarRankingColetivo calcula. Válida só para o circuito
+// Master; a decisão de exibir ou não fica a cargo de quem chama esta função.
+export function agregarEficienciaClube(
+  resultados: ResultadoParaRanking[],
+): EficienciaClubeItem[] {
+  const mapa = new Map<
+    string,
+    { clubeNome: string; somaPontos: number; atletas: Set<string> }
+  >();
+
+  for (const resultado of resultados) {
+    const atual = mapa.get(resultado.clubeId);
+    if (atual) {
+      atual.somaPontos += resultado.pontos;
+      atual.atletas.add(resultado.atletaId);
+    } else {
+      mapa.set(resultado.clubeId, {
+        clubeNome: resultado.clubeNome,
+        somaPontos: resultado.pontos,
+        atletas: new Set([resultado.atletaId]),
+      });
+    }
+  }
+
+  const ordenado = [...mapa.entries()]
+    .map(([clubeId, item]) => ({
+      clubeId,
+      clubeNome: item.clubeNome,
+      pontos: item.somaPontos / item.atletas.size,
+      totalAtletas: item.atletas.size,
+    }))
+    .sort((a, b) => b.pontos - a.pontos);
+
   return atribuirPosicoes(ordenado);
 }
