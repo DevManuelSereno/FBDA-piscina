@@ -94,24 +94,22 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          props.mode === "create" ? (
-            <Button>
-              <Plus className="size-4" />
-              Novo tipo
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Editar ${props.tipo.nome}`}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger asChild>
+        {props.mode === "create" ? (
+          <Button>
+            <Plus className="size-4" />
+            Novo tipo
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar ${props.tipo.nome}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

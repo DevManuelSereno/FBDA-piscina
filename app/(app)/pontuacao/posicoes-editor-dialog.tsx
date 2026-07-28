@@ -79,14 +79,12 @@ export function PosicoesEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          <Button variant="outline" size="sm">
-            <ListOrdered className="size-4" />
-            Editar posições
-          </Button>
-        }
-      />
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <ListOrdered className="size-4" />
+          Editar posições
+        </Button>
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

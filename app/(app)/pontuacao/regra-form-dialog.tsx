@@ -60,14 +60,12 @@ export function RegraFormDialog() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          <Button>
-            <Plus className="size-4" />
-            Nova regra
-          </Button>
-        }
-      />
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="size-4" />
+          Nova regra
+        </Button>
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

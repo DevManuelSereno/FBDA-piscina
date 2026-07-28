@@ -36,13 +36,11 @@ export function ClubeDeleteButton({ id, nome }: { id: string; nome: string }) {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        render={
-          <Button variant="ghost" size="icon-sm" aria-label={`Excluir ${nome}`}>
-            <Trash2 className="size-4" />
-          </Button>
-        }
-      />
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label={`Excluir ${nome}`}>
+          <Trash2 className="size-4" />
+        </Button>
+      </AlertDialogTrigger>
       {open && (
         <AlertDialogContent>
           <AlertDialogHeader>

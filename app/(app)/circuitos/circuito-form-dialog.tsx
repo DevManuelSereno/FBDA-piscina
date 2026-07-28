@@ -79,24 +79,22 @@ export function CircuitoFormDialog(props: CircuitoFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          props.mode === "create" ? (
-            <Button>
-              <Plus className="size-4" />
-              Novo circuito
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Editar ${props.circuito.nome}`}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger asChild>
+        {props.mode === "create" ? (
+          <Button>
+            <Plus className="size-4" />
+            Novo circuito
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar ${props.circuito.nome}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

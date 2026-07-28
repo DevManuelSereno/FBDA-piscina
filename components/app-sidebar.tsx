@@ -69,12 +69,14 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  render={<Link href="/dashboard" />}
+                  asChild
                   isActive={pathname === "/dashboard"}
                   tooltip="Dashboard"
                 >
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <Link href="/dashboard">
+                    <LayoutDashboard />
+                    <span>Dashboard</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -88,12 +90,14 @@ export function AppSidebar() {
               {cadastroItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
-                    render={<Link href={item.url} />}
+                    asChild
                     isActive={pathname.startsWith(item.url)}
                     tooltip={item.title}
                   >
-                    <item.icon />
-                    <span>{item.title}</span>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -108,12 +112,14 @@ export function AppSidebar() {
               {operacaoItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
-                    render={<Link href={item.url} />}
+                    asChild
                     isActive={pathname.startsWith(item.url)}
                     tooltip={item.title}
                   >
-                    <item.icon />
-                    <span>{item.title}</span>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

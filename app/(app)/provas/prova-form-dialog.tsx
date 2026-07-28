@@ -80,24 +80,22 @@ export function ProvaFormDialog(props: ProvaFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          props.mode === "create" ? (
-            <Button>
-              <Plus className="size-4" />
-              Nova prova
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Editar ${props.prova.nome}`}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger asChild>
+        {props.mode === "create" ? (
+          <Button>
+            <Plus className="size-4" />
+            Nova prova
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar ${props.prova.nome}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

@@ -91,24 +91,22 @@ export function CategoriaFormDialog(props: CategoriaFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          props.mode === "create" ? (
-            <Button>
-              <Plus className="size-4" />
-              Nova categoria
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Editar ${props.categoria.nome} ${props.categoria.sexo}`}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger asChild>
+        {props.mode === "create" ? (
+          <Button>
+            <Plus className="size-4" />
+            Nova categoria
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar ${props.categoria.nome} ${props.categoria.sexo}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>

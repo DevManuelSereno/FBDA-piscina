@@ -77,24 +77,22 @@ export function ClubeFormDialog(props: ClubeFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          props.mode === "create" ? (
-            <Button>
-              <Plus className="size-4" />
-              Novo clube
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Editar ${props.clube.nome}`}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger asChild>
+        {props.mode === "create" ? (
+          <Button>
+            <Plus className="size-4" />
+            Novo clube
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar ${props.clube.nome}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </DialogTrigger>
       {open && (
         <DialogContent>
           <DialogHeader>
