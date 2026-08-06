@@ -33,7 +33,7 @@ export type EficienciaClubeItem = {
 // mesma posição, e a próxima posição pula o número de itens empatados
 // (ex.: 1, 1, 3, 4 — não 1, 1, 2, 3). Assume `itens` já ordenado por
 // pontos decrescente.
-function atribuirPosicoes<T extends { pontos: number }>(
+export function atribuirPosicoes<T extends { pontos: number }>(
   itens: T[],
 ): (T & { posicao: number })[] {
   const resultado: (T & { posicao: number })[] = [];

@@ -29,6 +29,7 @@ type TipoCompeticao = {
   grupoRelatorio: string;
   ordem: number;
   regraPontuacaoId: string | null;
+  regraPontuacaoForaId: string | null;
 };
 
 type TipoCompeticaoFormDialogProps = (
@@ -52,6 +53,7 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
     metodoPontuacao: (tipo?.metodoPontuacao as TipoCompeticaoInput["metodoPontuacao"]) ?? "COLOCACAO",
     ordem: tipo?.ordem ?? 0,
     regraPontuacaoId: tipo?.regraPontuacaoId ?? undefined,
+    regraPontuacaoForaId: tipo?.regraPontuacaoForaId ?? undefined,
     grupoRelatorio: (tipo?.grupoRelatorio as TipoCompeticaoInput["grupoRelatorio"]) ?? GRUPOS_RELATORIO[0].value,
   };
 
@@ -180,6 +182,26 @@ export function TipoCompeticaoFormDialog(props: TipoCompeticaoFormDialogProps) {
                   ))}
                 </NativeSelect>
                 <FieldError errors={[errors.regraPontuacaoId]} />
+              </Field>
+            )}
+            {metodo === "COLOCACAO" && (
+              <Field>
+                <FieldLabel htmlFor="regraPontuacaoForaId">
+                  Regra de pontuação (fora de Salvador)
+                </FieldLabel>
+                <NativeSelect id="regraPontuacaoForaId" {...register("regraPontuacaoForaId")}>
+                  <option value="">Mesma regra, qualquer local</option>
+                  {props.regras.map((regra) => (
+                    <option key={regra.id} value={regra.id}>
+                      {regra.nome}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Se não selecionada, a regra acima vale para
+                  competições em Salvador e fora de Salvador.
+                </p>
+                <FieldError errors={[errors.regraPontuacaoForaId]} />
               </Field>
             )}
             <Field>

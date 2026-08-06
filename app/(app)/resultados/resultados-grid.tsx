@@ -25,12 +25,14 @@ export type LinhaResultado = {
   status: ResultadoStatus;
   tempoCentesimos: number | null;
   colocacao: number | null;
+  recordeTipo: string | null;
 };
 
 type LinhaEstado = {
   status: ResultadoStatus;
   tempoRaw: string;
   colocacaoRaw: string;
+  recordeTipo: string;
   error: string | null;
   warning: string | null;
 };
@@ -47,11 +49,13 @@ export function ResultadosGrid({
   provaId,
   competicaoId,
   circuitoId,
+  tiposRecorde,
 }: {
   linhas: LinhaResultado[];
   provaId: string;
   competicaoId: string;
   circuitoId: string;
+  tiposRecorde: string[];
 }) {
   const [estados, setEstados] = useState<Record<string, LinhaEstado>>(() =>
     Object.fromEntries(
@@ -64,6 +68,7 @@ export function ResultadosGrid({
               ? formatTime(linha.tempoCentesimos)
               : "",
           colocacaoRaw: linha.colocacao !== null ? String(linha.colocacao) : "",
+          recordeTipo: linha.recordeTipo ?? "",
           error: null,
           warning: null,
         },
@@ -83,7 +88,7 @@ export function ResultadosGrid({
   function salvar(
     linha: LinhaResultado,
     overrides?: Partial<
-      Pick<LinhaEstado, "status" | "tempoRaw" | "colocacaoRaw">
+      Pick<LinhaEstado, "status" | "tempoRaw" | "colocacaoRaw" | "recordeTipo">
     >,
   ) {
     if (!linha.categoriaId) return;
@@ -99,6 +104,7 @@ export function ResultadosGrid({
         status: estado.status,
         tempoRaw: estado.tempoRaw,
         colocacaoRaw: estado.colocacaoRaw,
+        recordeTipo: estado.recordeTipo || null,
       });
 
       atualizarEstado(linha.atletaId, {
@@ -150,6 +156,7 @@ export function ResultadosGrid({
             <TableHead className="w-32">Tempo</TableHead>
             <TableHead className="w-28">Colocação</TableHead>
             <TableHead className="w-32">Status</TableHead>
+            <TableHead className="w-40">Recorde</TableHead>
             <TableHead className="w-8" />
           </TableRow>
         </TableHeader>
@@ -237,6 +244,25 @@ export function ResultadosGrid({
                     <option value="VALIDO">Válido</option>
                     <option value="DQ">DQ</option>
                     <option value="DNS">DNS</option>
+                  </NativeSelect>
+                </TableCell>
+                <TableCell>
+                  <NativeSelect
+                    aria-label={`Recorde de ${linha.nomeCompleto}`}
+                    value={estado.recordeTipo}
+                    disabled={semCategoria || !isValido}
+                    onChange={(e) => {
+                      const recordeTipo = e.target.value;
+                      atualizarEstado(linha.atletaId, { recordeTipo });
+                      salvar(linha, { recordeTipo });
+                    }}
+                  >
+                    <option value="">Nenhum</option>
+                    {tiposRecorde.map((tipo) => (
+                      <option key={tipo} value={tipo}>
+                        {tipo}
+                      </option>
+                    ))}
                   </NativeSelect>
                 </TableCell>
                 <TableCell>

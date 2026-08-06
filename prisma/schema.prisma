@@ -42,8 +42,9 @@ model Circuito {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  categorias      Categoria[]
-  tiposCompeticao TipoCompeticao[]
+  categorias        Categoria[]
+  tiposCompeticao   TipoCompeticao[]
+  pontuacaoRecordes PontuacaoRecorde[]
 
   @@unique([nome])
 }
@@ -66,9 +67,17 @@ model TipoCompeticao {
   circuitoId String
   circuito   Circuito @relation(fields: [circuitoId], references: [id])
 
-  // Só relevante quando metodoPontuacao = COLOCACAO.
+  // Só relevante quando metodoPontuacao = COLOCACAO. Usada quando a
+  // competição é em Salvador (Competicao.localTipo = "SALVADOR", o padrão).
   regraPontuacaoId String?
-  regraPontuacao   RegraPontuacao? @relation(fields: [regraPontuacaoId], references: [id])
+  regraPontuacao   RegraPontuacao? @relation("RegraPontuacaoSalvador", fields: [regraPontuacaoId], references: [id])
+
+  // Regra alternativa para quando a competição é fora de Salvador (Art. 15º,
+  // §2º do Regulamento Geral 2026 — escala de pontos diferente por local).
+  // Opcional: se não preenchida, regraPontuacao acima vale para qualquer
+  // local (retrocompatível com tipos de competição já cadastrados).
+  regraPontuacaoForaId String?
+  regraPontuacaoFora    RegraPontuacao? @relation("RegraPontuacaoFora", fields: [regraPontuacaoForaId], references: [id])
 
   competicoes Competicao[]
 
@@ -146,6 +155,11 @@ model Competicao {
   data      DateTime
   local     String?
   temporada String?
+  // "SALVADOR" | "FORA" — determina qual RegraPontuacao do TipoCompeticao
+  // é usada (Art. 15º, §1º/§2º do Regulamento Geral 2026: mesma colocação
+  // vale pontuação diferente dentro ou fora de Salvador). Campo próprio,
+  // separado do `local` (texto livre) para não depender de parsing de texto.
+  localTipo String @default("SALVADOR")
 
   tipoCompeticaoId String
   tipoCompeticao   TipoCompeticao @relation(fields: [tipoCompeticaoId], references: [id])
@@ -178,6 +192,11 @@ model Resultado {
 
   tempoCentesimos Int? // null quando status != VALIDO
   colocacao       Int? // posição na prova; null quando DQ/DNS
+  // Recorde batido nessa prova (ex.: "Baiano", "Brasileiro Absoluto"),
+  // marcado manualmente por quem lança o resultado. Nome livre, casado com
+  // PontuacaoRecorde.tipoRecorde do mesmo circuito para o bônus de pontos
+  // (Art. 15º §3º do Regulamento Geral / equivalente no Master).
+  recordeTipo     String?
   pontos          Float  @default(0)
   status          String @default("VALIDO") // VALIDO | DQ | DNS
 
@@ -224,11 +243,32 @@ model RegraPontuacao {
   tipo  String // COLOCACAO | FINA
   ativo Boolean @default(false)
 
-  posicoes        PontuacaoPosicao[]
-  tiposCompeticao TipoCompeticao[]
+  posicoes                       PontuacaoPosicao[]
+  tiposCompeticaoSalvador        TipoCompeticao[]   @relation("RegraPontuacaoSalvador")
+  tiposCompeticaoFora            TipoCompeticao[]   @relation("RegraPontuacaoFora")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// PontuacaoRecorde: bônus de pontos por recorde batido (Baiano/Brasileiro/
+// Sul-Americano/Mundial), somado à pontuação de colocação do Resultado
+// quando Resultado.recordeTipo casa com o tipoRecorde. Escalas diferentes
+// por regulamento (Geral x Master), por isso vinculado a um Circuito
+// específico, não uma tabela global.
+model PontuacaoRecorde {
+  id          String @id @default(cuid())
+  tipoRecorde String
+  pontos      Float
+  ordem       Int    @default(0)
+
+  circuitoId String
+  circuito   Circuito @relation(fields: [circuitoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([circuitoId, tipoRecorde])
 }
 
 model PontuacaoPosicao {

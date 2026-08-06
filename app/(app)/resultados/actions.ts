@@ -9,7 +9,11 @@ import {
   temColocacaoDuplicada,
   type ResultadoStatus,
 } from "@/lib/resultado";
-import { calcularPontos } from "@/lib/scoring";
+import {
+  calcularBonusRecorde,
+  calcularPontos,
+  resolverRegraPorLocal,
+} from "@/lib/scoring";
 import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
 
 export type SalvarResultadoInput = {
@@ -20,6 +24,7 @@ export type SalvarResultadoInput = {
   status: ResultadoStatus;
   tempoRaw: string;
   colocacaoRaw: string;
+  recordeTipo: string | null;
 };
 
 export type SalvarResultadoOutput = {
@@ -48,7 +53,15 @@ export async function salvarResultado(
     prisma.atleta.findUnique({ where: { id: input.atletaId } }),
     prisma.competicao.findUnique({
       where: { id: input.competicaoId },
-      include: { tipoCompeticao: { include: { regraPontuacao: { include: { posicoes: true } } } } },
+      include: {
+        tipoCompeticao: {
+          include: {
+            regraPontuacao: { include: { posicoes: true } },
+            regraPontuacaoFora: { include: { posicoes: true } },
+            circuito: { include: { pontuacaoRecordes: true } },
+          },
+        },
+      },
     }),
     prisma.categoria.findMany(),
   ]);
@@ -77,11 +90,21 @@ export async function salvarResultado(
   }
 
   let pontos = 0;
-  if (parsed.status === "VALIDO" && parsed.colocacao !== null) {
-    const regra = competicao.tipoCompeticao.regraPontuacao;
-    if (regra) {
-      pontos = calcularPontos(parsed.colocacao, regra.posicoes);
+  if (parsed.status === "VALIDO") {
+    if (parsed.colocacao !== null) {
+      const regra = resolverRegraPorLocal(
+        competicao.localTipo,
+        competicao.tipoCompeticao.regraPontuacao,
+        competicao.tipoCompeticao.regraPontuacaoFora,
+      );
+      if (regra) {
+        pontos = calcularPontos(parsed.colocacao, regra.posicoes);
+      }
     }
+    pontos += calcularBonusRecorde(
+      input.recordeTipo,
+      competicao.tipoCompeticao.circuito.pontuacaoRecordes,
+    );
   }
 
   let warning: string | undefined;
@@ -114,12 +137,14 @@ export async function salvarResultado(
         status: parsed.status,
         tempoCentesimos: parsed.tempoCentesimos,
         colocacao: parsed.colocacao,
+        recordeTipo: input.recordeTipo,
         pontos,
       },
       update: {
         status: parsed.status,
         tempoCentesimos: parsed.tempoCentesimos,
         colocacao: parsed.colocacao,
+        recordeTipo: input.recordeTipo,
         pontos,
       },
     });

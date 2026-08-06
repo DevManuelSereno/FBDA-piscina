@@ -31,6 +31,7 @@ export default async function CompeticoesPage() {
     nome: c.nome,
     data: c.data,
     local: c.local,
+    localTipo: c.localTipo,
     temporada: c.temporada,
     tipoCompeticaoId: c.tipoCompeticaoId,
     tipoNome: c.tipoCompeticao.nome,

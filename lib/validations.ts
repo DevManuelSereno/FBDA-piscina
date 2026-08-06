@@ -51,6 +51,13 @@ export const tipoCompeticaoSchema = z
       .string()
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    // Regra alternativa para competições fora de Salvador (Art. 15º, §2º do
+    // Regulamento Geral 2026). Opcional — se vazia, regraPontuacaoId vale
+    // para qualquer local.
+    regraPontuacaoForaId: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
   })
   .refine(
     (data) => data.metodoPontuacao !== "COLOCACAO" || !!data.regraPontuacaoId,
@@ -97,10 +104,12 @@ export const atletaSchema = z.object({
 });
 export type AtletaInput = z.infer<typeof atletaSchema>;
 
+export const LOCAL_TIPO = ["SALVADOR", "FORA"] as const;
 export const competicaoSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome da competição."),
   data: z.date("Data inválida."),
   local: z.string().trim().optional().or(z.literal("")),
+  localTipo: z.enum(LOCAL_TIPO),
   temporada: z.string().trim().optional().or(z.literal("")),
   tipoCompeticaoId: z.string().min(1, "Selecione o tipo de competição."),
 });
@@ -112,6 +121,19 @@ export const regraSchema = z.object({
   tipo: z.enum(TIPO_REGRA),
 });
 export type RegraInput = z.infer<typeof regraSchema>;
+
+// Bônus de recorde por circuito (Art. 15º §3º do Regulamento Geral /
+// equivalente no Master) — mesmo raciocínio de posicoesFormSchema abaixo:
+// validação por linha aqui, sem duplicatas entre linhas fica a cargo do
+// servidor (constraint @@unique([circuitoId, tipoRecorde])).
+export const pontuacaoRecordeItemSchema = z.object({
+  tipoRecorde: z.string().trim().min(2, "Informe o tipo de recorde."),
+  pontos: z.number("Pontos inválidos.").min(0, "Os pontos não podem ser negativos."),
+});
+export const recordesFormSchema = z.object({
+  recordes: z.array(pontuacaoRecordeItemSchema),
+});
+export type RecordesFormInput = z.infer<typeof recordesFormSchema>;
 
 // Validação por linha (posição/pontos individuais). Regras entre linhas
 // (sem duplicatas, ao menos uma posição) continuam em

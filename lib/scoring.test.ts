@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { calcularPontos, validarPosicoes, type PosicaoPontos } from "./scoring";
+import {
+  calcularBonusRecorde,
+  calcularPontos,
+  resolverRegraPorLocal,
+  validarPosicoes,
+  type PosicaoPontos,
+} from "./scoring";
 
 describe("calcularPontos", () => {
   const tabela: PosicaoPontos[] = [
@@ -19,6 +25,52 @@ describe("calcularPontos", () => {
 
   test("retorna 0 quando a colocação é null (DQ/DNS)", () => {
     expect(calcularPontos(null, tabela)).toBe(0);
+  });
+});
+
+describe("resolverRegraPorLocal", () => {
+  const regraSalvador = { nome: "Salvador" };
+  const regraFora = { nome: "Fora" };
+
+  test("usa a regra padrão quando a competição é em Salvador", () => {
+    expect(resolverRegraPorLocal("SALVADOR", regraSalvador, regraFora)).toBe(
+      regraSalvador,
+    );
+  });
+
+  test("usa a regra alternativa quando a competição é fora de Salvador e ela existe", () => {
+    expect(resolverRegraPorLocal("FORA", regraSalvador, regraFora)).toBe(
+      regraFora,
+    );
+  });
+
+  test("cai na regra padrão quando é fora de Salvador mas não há regra alternativa configurada", () => {
+    expect(resolverRegraPorLocal("FORA", regraSalvador, null)).toBe(
+      regraSalvador,
+    );
+  });
+
+  test("retorna null quando não há regra nenhuma", () => {
+    expect(resolverRegraPorLocal("SALVADOR", null, null)).toBeNull();
+  });
+});
+
+describe("calcularBonusRecorde", () => {
+  const recordes = [
+    { tipoRecorde: "Baiano de Classe", pontos: 10 },
+    { tipoRecorde: "Baiano Absoluto", pontos: 20 },
+  ];
+
+  test("retorna 0 quando não há recorde marcado", () => {
+    expect(calcularBonusRecorde(null, recordes)).toBe(0);
+  });
+
+  test("retorna os pontos do recorde correspondente", () => {
+    expect(calcularBonusRecorde("Baiano Absoluto", recordes)).toBe(20);
+  });
+
+  test("retorna 0 quando o recorde marcado não está configurado no circuito", () => {
+    expect(calcularBonusRecorde("Mundial", recordes)).toBe(0);
   });
 });
 

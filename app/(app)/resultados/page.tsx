@@ -50,9 +50,10 @@ export default async function ResultadosPage({
   const metodoPontuacao = competicao?.tipoCompeticao.metodoPontuacao ?? null;
 
   let linhas: LinhaResultado[] = [];
+  let tiposRecorde: string[] = [];
 
   if (circuitoId && competicaoId && provaId && metodoPontuacao === "COLOCACAO") {
-    const [atletas, categorias, resultados] = await Promise.all([
+    const [atletas, categorias, resultados, recordes] = await Promise.all([
       prisma.atleta.findMany({
         where: { ativo: true },
         orderBy: { nomeCompleto: "asc" },
@@ -60,7 +61,12 @@ export default async function ResultadosPage({
       }),
       prisma.categoria.findMany(),
       prisma.resultado.findMany({ where: { competicaoId, provaId } }),
+      prisma.pontuacaoRecorde.findMany({
+        where: { circuitoId },
+        orderBy: { ordem: "asc" },
+      }),
     ]);
+    tiposRecorde = recordes.map((r) => r.tipoRecorde);
 
     const resultadoPorAtleta = new Map(
       resultados.map((resultado) => [resultado.atletaId, resultado]),
@@ -87,6 +93,7 @@ export default async function ResultadosPage({
         status: (resultado?.status as LinhaResultado["status"]) ?? "VALIDO",
         tempoCentesimos: resultado?.tempoCentesimos ?? null,
         colocacao: resultado?.colocacao ?? null,
+        recordeTipo: resultado?.recordeTipo ?? null,
       };
     });
   }
@@ -130,6 +137,7 @@ export default async function ResultadosPage({
           provaId={provaId}
           competicaoId={competicaoId}
           circuitoId={circuitoId}
+          tiposRecorde={tiposRecorde}
         />
       )}
     </div>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function TiposCompeticaoPage() {
   const [tipos, circuitos, regras] = await Promise.all([
     prisma.tipoCompeticao.findMany({
-      include: { circuito: true, regraPontuacao: true },
+      include: { circuito: true, regraPontuacao: true, regraPontuacaoFora: true },
       orderBy: [{ circuito: { ordem: "asc" } }, { ordem: "asc" }],
     }),
     prisma.circuito.findMany({ orderBy: { ordem: "asc" } }),
@@ -28,6 +28,8 @@ export default async function TiposCompeticaoPage() {
     ordem: t.ordem,
     regraPontuacaoId: t.regraPontuacaoId,
     regraNome: t.regraPontuacao?.nome ?? null,
+    regraPontuacaoForaId: t.regraPontuacaoForaId,
+    regraForaNome: t.regraPontuacaoFora?.nome ?? null,
   }));
 
   return (

@@ -164,21 +164,65 @@ async function main() {
     ].map((p) => prisma.prova.create({ data: p })),
   );
 
-  // Regra de pontuação padrão por colocação (1º ao 8º lugar) — usada pelos
-  // tipos de competição COLOCACAO (Concurso) de ambos os circuitos.
-  const regraColocacaoPadrao = await prisma.regraPontuacao.create({
-    data: {
-      nome: "Colocação Padrão (1º-8º)",
-      tipo: "COLOCACAO",
-      ativo: true,
-      posicoes: {
-        create: [9, 7, 6, 5, 4, 3, 2, 1].map((pontos, index) => ({
-          posicao: index + 1,
-          pontos,
-        })),
+  // Regras de pontuação por colocação para "Concurso" — valores oficiais
+  // confirmados no Regulamento Geral de Competições 2026, Art. 15º §1º/§2º
+  // (extras/REGULAMENTO GERAL DE COMPETIÇÕES 2026...pdf): a mesma colocação
+  // vale pontuação diferente dentro ou fora de Salvador. Usadas pelos tipos
+  // de competição COLOCACAO (Concurso) de ambos os circuitos — Competicao
+  // decide qual das duas vale via o campo localTipo.
+  const [regraColocacaoSalvador, regraColocacaoFora] = await Promise.all([
+    prisma.regraPontuacao.create({
+      data: {
+        nome: "Concurso — Salvador (1º-16º)",
+        tipo: "COLOCACAO",
+        ativo: true,
+        posicoes: {
+          create: [25, 20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(
+            (pontos, index) => ({ posicao: index + 1, pontos }),
+          ),
+        },
       },
-    },
-  });
+    }),
+    prisma.regraPontuacao.create({
+      data: {
+        nome: "Concurso — Fora de Salvador (1º-16º)",
+        tipo: "COLOCACAO",
+        ativo: false,
+        posicoes: {
+          create: [30, 25, 20, 18, 16, 13, 12, 11, 9, 8, 7, 6, 5, 4, 3, 2].map(
+            (pontos, index) => ({ posicao: index + 1, pontos }),
+          ),
+        },
+      },
+    }),
+  ]);
+
+  // Bônus de pontos por recorde batido, somado à pontuação de colocação
+  // (Resultado.recordeTipo). Valores oficiais confirmados nos regulamentos —
+  // escalas diferentes por circuito, por isso PontuacaoRecorde é por
+  // circuitoId, não uma tabela global.
+  await Promise.all([
+    ...[
+      { tipoRecorde: "Baiano de Classe", pontos: 10, ordem: 1 },
+      { tipoRecorde: "Baiano Absoluto", pontos: 20, ordem: 2 },
+      { tipoRecorde: "Brasileiro Absoluto", pontos: 60, ordem: 3 },
+      { tipoRecorde: "Sul-Americano Absoluto", pontos: 70, ordem: 4 },
+    ].map((r) =>
+      prisma.pontuacaoRecorde.create({
+        data: { ...r, circuitoId: circuitoJovem.id },
+      }),
+    ),
+    ...[
+      { tipoRecorde: "Baiano", pontos: 10, ordem: 1 },
+      { tipoRecorde: "Brasileiro", pontos: 25, ordem: 2 },
+      { tipoRecorde: "Sul-Americano", pontos: 50, ordem: 3 },
+      { tipoRecorde: "Mundial", pontos: 100, ordem: 4 },
+    ].map((r) =>
+      prisma.pontuacaoRecorde.create({
+        data: { ...r, circuitoId: circuitoMaster.id },
+      }),
+    ),
+  ]);
 
   // Tipos de competição: os NOMES e agrupamentos vêm das planilhas reais
   // (cabeçalhos "CONCURSOS", "CAMPEONATOS", "REGIONAIS - INFANTIL A
@@ -195,7 +239,8 @@ async function main() {
         metodoPontuacao: "COLOCACAO",
         grupoRelatorio: "CONCURSO",
         ordem: 1,
-        regraPontuacaoId: regraColocacaoPadrao.id,
+        regraPontuacaoId: regraColocacaoSalvador.id,
+        regraPontuacaoForaId: regraColocacaoFora.id,
       },
     }),
     prisma.tipoCompeticao.create({
@@ -241,7 +286,8 @@ async function main() {
         metodoPontuacao: "COLOCACAO",
         grupoRelatorio: "CONCURSO",
         ordem: 1,
-        regraPontuacaoId: regraColocacaoPadrao.id,
+        regraPontuacaoId: regraColocacaoSalvador.id,
+        regraPontuacaoForaId: regraColocacaoFora.id,
       },
     }),
     prisma.tipoCompeticao.create({

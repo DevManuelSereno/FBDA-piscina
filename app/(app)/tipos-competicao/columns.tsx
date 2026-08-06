@@ -14,6 +14,8 @@ export type TipoCompeticaoRow = {
   ordem: number;
   regraPontuacaoId: string | null;
   regraNome: string | null;
+  regraPontuacaoForaId: string | null;
+  regraForaNome: string | null;
 };
 
 type TipoCompeticaoColumnsProps = {
@@ -41,6 +43,11 @@ export function buildColumns({
       id: "regraNome",
       header: "Regra",
       cell: ({ row }) => row.original.regraNome ?? "—",
+    },
+    {
+      id: "regraForaNome",
+      header: "Regra (fora de Salvador)",
+      cell: ({ row }) => row.original.regraForaNome ?? "—",
     },
     {
       id: "actions",

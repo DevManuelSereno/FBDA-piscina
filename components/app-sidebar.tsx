@@ -10,7 +10,9 @@ import {
   GitBranch,
   Layers,
   LayoutDashboard,
+  Medal,
   PenLine,
+  Star,
   Tag,
   Table2,
   Trophy,
@@ -43,7 +45,9 @@ const operacaoItems = [
   { title: "Resultados", url: "/resultados", icon: ClipboardList },
   { title: "Lançamento de Pontos", url: "/lancamento-pontos", icon: PenLine },
   { title: "Pontuação", url: "/pontuacao", icon: Calculator },
+  { title: "Bônus de Recorde", url: "/pontuacao-recorde", icon: Medal },
   { title: "Ranking", url: "/ranking", icon: Trophy },
+  { title: "Melhores do Ano", url: "/melhores-do-ano", icon: Star },
   { title: "Relatório Matriz", url: "/relatorio-matriz", icon: Table2 },
 ];
 

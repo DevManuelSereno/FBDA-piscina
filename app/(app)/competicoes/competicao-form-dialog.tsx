@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { competicaoSchema, type CompeticaoInput } from "@/lib/validations";
+import { LOCAL_TIPO, competicaoSchema, type CompeticaoInput } from "@/lib/validations";
 import { createCompeticao, updateCompeticao } from "./actions";
 
 type Competicao = {
@@ -25,6 +25,7 @@ type Competicao = {
   nome: string;
   data: Date;
   local: string | null;
+  localTipo: string;
   temporada: string | null;
   tipoCompeticaoId: string;
 };
@@ -53,6 +54,7 @@ export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
     data: competicao?.data ?? new Date(),
     temporada: competicao?.temporada ?? "",
     local: competicao?.local ?? "",
+    localTipo: (competicao?.localTipo as CompeticaoInput["localTipo"]) ?? "SALVADOR",
   };
 
   const {
@@ -160,11 +162,24 @@ export function CompeticaoFormDialog(props: CompeticaoFormDialogProps) {
                 <FieldError errors={[errors.temporada]} />
               </Field>
             </div>
-            <Field>
-              <FieldLabel htmlFor="local">Local</FieldLabel>
-              <Input id="local" {...register("local")} />
-              <FieldError errors={[errors.local]} />
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="local">Local</FieldLabel>
+                <Input id="local" {...register("local")} />
+                <FieldError errors={[errors.local]} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="localTipo">Pontuação por local</FieldLabel>
+                <NativeSelect id="localTipo" {...register("localTipo")}>
+                  {LOCAL_TIPO.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {tipo === "SALVADOR" ? "Salvador" : "Fora de Salvador"}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <FieldError errors={[errors.localTipo]} />
+              </Field>
+            </div>
 
             {serverError && (
               <p role="alert" className="text-sm font-medium text-destructive">

@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { calcularPontos, validarPosicoes, type PosicaoPontos } from "@/lib/scoring";
+import {
+  calcularBonusRecorde,
+  calcularPontos,
+  resolverRegraPorLocal,
+  validarPosicoes,
+  type PosicaoPontos,
+} from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth-guard";
 import { calcularPontosCompeticao } from "@/lib/pontuacao-competicao";
 import { regraSchema, type RegraInput } from "@/lib/validations";
@@ -94,15 +100,32 @@ export async function recalcularRanking(): Promise<
     where: { status: "VALIDO" },
     include: {
       competicao: {
-        include: { tipoCompeticao: { include: { regraPontuacao: { include: { posicoes: true } } } } },
+        include: {
+          tipoCompeticao: {
+            include: {
+              regraPontuacao: { include: { posicoes: true } },
+              regraPontuacaoFora: { include: { posicoes: true } },
+              circuito: { include: { pontuacaoRecordes: true } },
+            },
+          },
+        },
       },
     },
   });
 
   await prisma.$transaction(
     resultados.map((resultado) => {
-      const regra = resultado.competicao.tipoCompeticao.regraPontuacao;
-      const pontos = regra ? calcularPontos(resultado.colocacao, regra.posicoes) : 0;
+      const regra = resolverRegraPorLocal(
+        resultado.competicao.localTipo,
+        resultado.competicao.tipoCompeticao.regraPontuacao,
+        resultado.competicao.tipoCompeticao.regraPontuacaoFora,
+      );
+      const pontos =
+        (regra ? calcularPontos(resultado.colocacao, regra.posicoes) : 0) +
+        calcularBonusRecorde(
+          resultado.recordeTipo,
+          resultado.competicao.tipoCompeticao.circuito.pontuacaoRecordes,
+        );
       return prisma.resultado.update({
         where: { id: resultado.id },
         data: { pontos },

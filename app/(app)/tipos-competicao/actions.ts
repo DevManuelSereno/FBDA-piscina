@@ -23,6 +23,7 @@ export async function createTipoCompeticao(
       data: {
         ...parsed.data,
         regraPontuacaoId: parsed.data.regraPontuacaoId ?? null,
+        regraPontuacaoForaId: parsed.data.regraPontuacaoForaId ?? null,
       },
     });
   } catch (error) {
@@ -55,6 +56,7 @@ export async function updateTipoCompeticao(
       data: {
         ...parsed.data,
         regraPontuacaoId: parsed.data.regraPontuacaoId ?? null,
+        regraPontuacaoForaId: parsed.data.regraPontuacaoForaId ?? null,
       },
     });
   } catch (error) {

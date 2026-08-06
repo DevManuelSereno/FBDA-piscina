@@ -9,6 +9,7 @@ export type CompeticaoRow = {
   nome: string;
   data: Date;
   local: string | null;
+  localTipo: string;
   temporada: string | null;
   tipoCompeticaoId: string;
   tipoNome: string;
@@ -35,6 +36,12 @@ export function buildColumns({
       accessorKey: "local",
       header: "Local",
       cell: ({ row }) => row.original.local || "—",
+    },
+    {
+      accessorKey: "localTipo",
+      header: "Pontuação por local",
+      cell: ({ row }) =>
+        row.original.localTipo === "FORA" ? "Fora de Salvador" : "Salvador",
     },
     {
       accessorKey: "temporada",
